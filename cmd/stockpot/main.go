@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"fmt"
@@ -20,14 +20,16 @@ var (
 )
 
 // Execute executes the root command.
-func Execute() error {
-	return rootCmd.Execute()
+func main() {
+	rootCmd.Execute()
 }
 
 func init() {
 	cobra.OnInitialize(initConfig)
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.stockpot.yaml)")
+
+	rootCmd.AddCommand(serverCmd)
 }
 
 func er(msg interface{}) {

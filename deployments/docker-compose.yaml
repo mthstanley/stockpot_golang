@@ -1,0 +1,17 @@
+version: '3.8'
+
+networks:
+  shared-network:
+    driver: bridge
+
+services:
+  stockpot:
+    build:
+      context: ..
+      dockerfile: build/Dockerfile
+    container_name: stockpot
+    networks:
+      - shared-network
+    image: stockpot
+    ports:
+      - 8000:8000 # CRUD API

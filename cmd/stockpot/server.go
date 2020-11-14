@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"context"
@@ -20,10 +20,6 @@ var serverCmd = &cobra.Command{
 	Run:   run,
 }
 
-func init() {
-	rootCmd.AddCommand(serverCmd)
-}
-
 func run(cmd *cobra.Command, args []string) {
 
 	// =========================================================================
@@ -36,7 +32,7 @@ func run(cmd *cobra.Command, args []string) {
 	// Start API Service
 
 	api := http.Server{
-		Addr:         "localhost:8000",
+		Addr:         "0.0.0.0:8000",
 		Handler:      http.HandlerFunc(ListProducts),
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
