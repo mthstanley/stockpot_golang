@@ -27,9 +27,10 @@ FROM alpine:3.12
 ARG BUILD_DATE
 ARG VCS_REF
 COPY --from=builder /service/cmd/stockpot/stockpot /service/stockpot
+COPY configs /service
 WORKDIR /service
 EXPOSE 8000
-CMD ["./stockpot", "server"]
+CMD ["./stockpot", "--config", "stockpot.yaml", "server"]
 
 LABEL org.opencontainers.image.created="${BUILD_DATE}" \
       org.opencontainers.image.title="stockpot" \

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var serverCmd = &cobra.Command{
@@ -18,6 +19,12 @@ var serverCmd = &cobra.Command{
 	Short: "Run the server",
 	Long:  `This command initializes and runs the stockpot api server.`,
 	Run:   run,
+}
+
+func init() {
+	serverCmd.Flags().StringP("addr", "a", "0.0.0.0:8000", "The host and port the API should bind to")
+	viper.BindPFlag("addr", serverCmd.Flags().Lookup("addr"))
+	viper.SetDefault("addr", "0.0.0.0:8000")
 }
 
 func run(cmd *cobra.Command, args []string) {
@@ -32,7 +39,7 @@ func run(cmd *cobra.Command, args []string) {
 	// Start API Service
 
 	api := http.Server{
-		Addr:         "0.0.0.0:8000",
+		Addr:         viper.GetString("addr"),
 		Handler:      http.HandlerFunc(ListProducts),
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
