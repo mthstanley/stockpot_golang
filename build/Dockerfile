@@ -1,5 +1,5 @@
 # Build the Go Binary.
-FROM golang:1.15.4 as builder
+FROM golang:1.26.5 as builder
 ARG VCS_REF
 ENV CGO_ENABLED 0
 
@@ -23,7 +23,7 @@ WORKDIR /service/cmd/stockpot
 RUN go build
 
 # Run the Go Binary in Alpine.
-FROM alpine:3.12
+FROM alpine:3.24
 ARG BUILD_DATE
 ARG VCS_REF
 COPY --from=builder /service/cmd/stockpot/stockpot /service/stockpot
