@@ -31,7 +31,7 @@ func init() {
 	rootCmd.AddCommand(serverCmd)
 }
 
-func er(msg interface{}) {
+func er(msg any) {
 	fmt.Println("Error:", msg)
 	os.Exit(1)
 }
