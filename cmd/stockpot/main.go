@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -32,7 +31,7 @@ func init() {
 	rootCmd.AddCommand(serverCmd)
 }
 
-func er(msg interface{}) {
+func er(msg any) {
 	fmt.Println("Error:", msg)
 	os.Exit(1)
 }
@@ -43,7 +42,7 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	} else {
 		// Find home directory.
-		home, err := homedir.Dir()
+		home, err := os.UserHomeDir()
 		if err != nil {
 			er(err)
 		}
