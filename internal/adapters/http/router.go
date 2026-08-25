@@ -12,7 +12,8 @@ func NewRouter(userService user.Service) *http.ServeMux {
 	}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /user", userHandler.GetUser)
+	mux.HandleFunc("GET /user/{id}", userHandler.HandleGetUser)
+	mux.HandleFunc("POST /user", userHandler.HandleCreateUser)
 
 	return mux
 }

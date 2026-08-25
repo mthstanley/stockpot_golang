@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mthstanley/stockpot/internal/adapters/postgres"
 	user "github.com/mthstanley/stockpot/internal/core"
 )
@@ -17,11 +18,9 @@ type Server struct {
 	userService user.Service
 }
 
-func NewServer() Server {
-	var userRepo user.Repository = postgres.UserRepository{}
-	var userService user.Service = user.DefaultService{
-		Repo: userRepo,
-	}
+func NewServer(db *pgxpool.Pool) Server {
+	userRepo := postgres.NewUserRepository(db)
+	userService := user.NewDefaultService(userRepo)
 	return Server{
 		userService,
 	}

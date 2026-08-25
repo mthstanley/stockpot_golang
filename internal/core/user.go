@@ -1,22 +1,34 @@
 package user
 
+import "context"
+
 type User struct {
 	ID   *int64
 	Name string
 }
 
 type Repository interface {
-	GetByID(id int64) (*User, error)
+	GetByID(ctx context.Context, id int64) (*User, error)
+	Create(ctx context.Context, user User) (*User, error)
 }
 
 type Service interface {
-	Get(id int64) (*User, error)
+	Get(ctx context.Context, id int64) (*User, error)
+	Create(ctx context.Context, user User) (*User, error)
 }
 
 type DefaultService struct {
-	Repo Repository
+	repo Repository
 }
 
-func (s DefaultService) Get(id int64) (*User, error) {
-	return s.Repo.GetByID(id)
+func NewDefaultService(repo Repository) *DefaultService {
+	return &DefaultService{repo}
+}
+
+func (s DefaultService) Get(ctx context.Context, id int64) (*User, error) {
+	return s.repo.GetByID(ctx, id)
+}
+
+func (s DefaultService) Create(ctx context.Context, user User) (*User, error) {
+	return s.repo.Create(ctx, user)
 }
