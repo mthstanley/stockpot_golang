@@ -1,17 +1,54 @@
-version: '3.8'
-
-networks:
-  shared-network:
-    driver: bridge
+version: "3.8"
 
 services:
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      PGDATA: /data/postgres
+      POSTGRES_DB: stockpot
+    volumes:
+      - postgres:/data/postgres
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
+  migrate:
+    build:
+      context: ..
+      dockerfile: build/Dockerfile
+    entrypoint: sh -c "./stockpot --config configs/stockpot.yaml migrate"
+    env_file:
+      - ../.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+        restart: true
+
   stockpot:
     build:
       context: ..
       dockerfile: build/Dockerfile
     container_name: stockpot
-    networks:
-      - shared-network
+    env_file:
+      - ../.env
     image: stockpot
     ports:
       - 8000:8000 # CRUD API
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+networks:
+  app:
+    driver: bridge
+
+volumes:
+  postgres:
