@@ -6,7 +6,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	db "github.com/mthstanley/stockpot/db/sqlc"
-	user "github.com/mthstanley/stockpot/internal/core"
+	user "github.com/mthstanley/stockpot/internal/core/user"
 )
 
 func convertToUserDomainModel(appUser db.AppUser) *user.User {

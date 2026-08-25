@@ -3,7 +3,7 @@ package http
 import (
 	"net/http"
 
-	user "github.com/mthstanley/stockpot/internal/core"
+	user "github.com/mthstanley/stockpot/internal/core/user"
 )
 
 func NewRouter(userService user.Service) *http.ServeMux {

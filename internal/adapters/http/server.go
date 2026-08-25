@@ -11,7 +11,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mthstanley/stockpot/internal/adapters/postgres"
-	user "github.com/mthstanley/stockpot/internal/core"
+	user "github.com/mthstanley/stockpot/internal/core/user"
 )
 
 type Server struct {

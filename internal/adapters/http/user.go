@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
-	user "github.com/mthstanley/stockpot/internal/core"
+	user "github.com/mthstanley/stockpot/internal/core/user"
 )
 
 type UserHandler struct {
