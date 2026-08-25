@@ -19,6 +19,7 @@ var serverCMD = &cobra.Command{
 }
 
 type ServerConfig struct {
+	Addr       string `mapstructure:"addr"`
 	DBHost     string `mapstructure:"db-host"`
 	DBPort     string `mapstructure:"db-port"`
 	DBUsername string `mapstructure:"db-username"`
@@ -60,7 +61,7 @@ func runServer(cmd *cobra.Command, args []string) {
 	}
 	server := http.NewServer(db)
 
-	err = server.Serve(viper.GetString("addr"))
+	err = server.Serve(config.Addr)
 
 	if err != nil {
 		log.Fatalf("main : could not stop server gracefully : %v", err)
