@@ -59,10 +59,10 @@ func runMigrate(cmd *cobra.Command, args []string) {
 	goose.SetBaseFS(migrations.Embedded)
 
 	if err := goose.SetDialect("postgres"); err != nil {
-		panic(err)
+		log.Fatalf("failed to migrate database: %v", err)
 	}
 
 	if err := goose.Up(db, "db/migrations"); err != nil {
-		panic(err)
+		log.Fatalf("failed to migrate database: %v", err)
 	}
 }
