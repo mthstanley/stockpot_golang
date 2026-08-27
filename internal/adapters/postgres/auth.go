@@ -2,11 +2,14 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	db "github.com/mthstanley/stockpot/db/sqlc"
+	"github.com/mthstanley/stockpot/internal/core"
 	"github.com/mthstanley/stockpot/internal/core/auth"
 )
 
@@ -31,6 +34,9 @@ func (r AuthUserRepository) GetAuthUserCredentials(ctx context.Context, username
 	queries := db.New(r.db)
 	authUser, err := queries.GetAuthUser(ctx, username)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, &core.EntityNotFound{Type: auth.EntityType, Ident: username, Err: err}
+		}
 		return nil, fmt.Errorf("failed to retrieve auth user: %w", err)
 	}
 	return convertToAuthUserCredentialsDomainModel(authUser), nil
