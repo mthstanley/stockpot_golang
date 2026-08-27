@@ -11,23 +11,28 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mthstanley/stockpot/internal/adapters/postgres"
-	user "github.com/mthstanley/stockpot/internal/core"
+	"github.com/mthstanley/stockpot/internal/core/auth"
+	user "github.com/mthstanley/stockpot/internal/core/user"
 )
 
 type Server struct {
 	userService user.Service
+	authService auth.Service
 }
 
 func NewServer(db *pgxpool.Pool) Server {
 	userRepo := postgres.NewUserRepository(db)
 	userService := user.NewDefaultService(userRepo)
+	authRepo := postgres.NewAuthUserRepository(db)
+	authService := auth.NewDefaultService(authRepo, userService)
 	return Server{
 		userService,
+		authService,
 	}
 }
 
 func (s Server) Serve(addr string) error {
-	router := NewRouter(s.userService)
+	router := NewRouter(s.userService, s.authService)
 
 	api := http.Server{
 		Addr:         addr,

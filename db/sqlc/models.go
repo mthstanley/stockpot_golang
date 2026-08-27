@@ -4,7 +4,18 @@
 
 package db
 
+import (
+	"github.com/jackc/pgx/v5/pgtype"
+)
+
 type AppUser struct {
 	ID   int64
 	Name string
+}
+
+type AuthUser struct {
+	ID           int64
+	Username     string
+	PasswordHash string
+	AppUser      pgtype.Int8
 }
