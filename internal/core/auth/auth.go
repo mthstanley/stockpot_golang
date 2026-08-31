@@ -16,6 +16,8 @@ type AuthUserCredentials struct {
 	UserID       int64
 }
 
+const EntityType string = "auth user"
+
 type AuthUser struct {
 	Username string
 	user.User

@@ -1,11 +1,15 @@
 package user
 
-import "context"
+import (
+	"context"
+)
 
 type User struct {
 	ID   *int64
 	Name string
 }
+
+const EntityType string = "user"
 
 type Repository interface {
 	GetByID(ctx context.Context, id int64) (*User, error)

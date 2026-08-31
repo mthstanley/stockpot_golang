@@ -2,11 +2,14 @@ package http
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
 
+	"github.com/mthstanley/stockpot/internal/core"
 	"github.com/mthstanley/stockpot/internal/core/auth"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type contextKey string
@@ -18,7 +21,22 @@ func ValidateAuth(authService auth.Service) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			username, password, ok := r.BasicAuth()
 			if !ok {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				errResponse := ErrorResponse{
+					Error:   "Unauthorized",
+					Details: "Request is missing auth headers",
+				}
+				data, err := json.Marshal(&errResponse)
+				if err != nil {
+					log.Println("error json encoding response:", err)
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+
+				w.WriteHeader(http.StatusUnauthorized)
+				w.Header().Set("Content-Type", "application/json; charset=utf-8")
+				if _, err := w.Write(data); err != nil {
+					log.Println("error writing result", err)
+				}
 				return
 			}
 
@@ -27,8 +45,29 @@ func ValidateAuth(authService auth.Service) func(http.Handler) http.Handler {
 				auth.UsernameAndPassword{Username: username, Password: password},
 			)
 			if err != nil {
-				log.Println("error validating user auth:", err)
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				aerr, ok := errors.AsType[*core.EntityNotFound](err)
+				if !errors.Is(bcrypt.ErrMismatchedHashAndPassword, err) &&
+					(ok && aerr.Type != auth.EntityType) {
+					// if we got an error that would not be part of the normal
+					// flow for invalid credentials then log it
+					log.Println("error validating user auth:", err)
+				}
+				errResponse := ErrorResponse{
+					Error:   "Unauthorized",
+					Details: "Request with invalid credentials",
+				}
+				data, err := json.Marshal(&errResponse)
+				if err != nil {
+					log.Println("error json encoding response:", err)
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+
+				w.WriteHeader(http.StatusUnauthorized)
+				w.Header().Set("Content-Type", "application/json; charset=utf-8")
+				if _, err := w.Write(data); err != nil {
+					log.Println("error writing result", err)
+				}
 				return
 			}
 
