@@ -17,6 +17,7 @@ func NewRouter(userService user.Service, authService auth.Service) *http.ServeMu
 	mux.Handle("GET /user/{id}", HandleErrors(userHandler.HandleGetUser))
 	mux.Handle("POST /user", HandleErrors(userHandler.HandleCreateUser))
 	mux.Handle("GET /user/auth", validateAuth(HandleErrors(userHandler.HandleGetAuthUser)))
+	mux.Handle("GET /user/token", validateAuth(HandleErrors(userHandler.HandleGetToken)))
 
 	return mux
 }

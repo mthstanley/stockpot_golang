@@ -6,21 +6,37 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strings"
 
-	"github.com/mthstanley/stockpot/internal/core"
 	"github.com/mthstanley/stockpot/internal/core/auth"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type contextKey string
 
 const authUserKey contextKey = "authenticatedUser"
 
+func extractJWT(r *http.Request) (string, bool) {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		return "", false
+	}
+
+	if !strings.HasPrefix(authHeader, "Bearer ") {
+		return "", false
+	}
+
+	return strings.TrimPrefix(authHeader, "Bearer "), true
+}
+
 func ValidateAuth(authService auth.Service) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			username, password, ok := r.BasicAuth()
-			if !ok {
+			var credential auth.UserCredentials
+			if username, password, ok := r.BasicAuth(); ok {
+				credential = auth.UsernameAndPassword{Username: username, Password: password}
+			} else if tokenString, ok := extractJWT(r); ok {
+				credential = auth.JWT{Token: tokenString}
+			} else {
 				errResponse := ErrorResponse{
 					Error:   "Unauthorized",
 					Details: "Request is missing auth headers",
@@ -42,12 +58,10 @@ func ValidateAuth(authService auth.Service) func(http.Handler) http.Handler {
 
 			authUser, err := authService.Validate(
 				r.Context(),
-				auth.UsernameAndPassword{Username: username, Password: password},
+				credential,
 			)
 			if err != nil {
-				aerr, ok := errors.AsType[*core.EntityNotFound](err)
-				if !errors.Is(bcrypt.ErrMismatchedHashAndPassword, err) &&
-					(ok && aerr.Type != auth.EntityType) {
+				if !errors.Is(err, auth.InvalidCredentialsError) {
 					// if we got an error that would not be part of the normal
 					// flow for invalid credentials then log it
 					log.Println("error validating user auth:", err)
