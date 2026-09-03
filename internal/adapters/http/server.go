@@ -20,11 +20,11 @@ type Server struct {
 	authService auth.Service
 }
 
-func NewServer(db *pgxpool.Pool) Server {
+func NewServer(db *pgxpool.Pool, jwtSecret string) Server {
 	userRepo := postgres.NewUserRepository(db)
 	userService := user.NewDefaultService(userRepo)
 	authRepo := postgres.NewAuthUserRepository(db)
-	authService := auth.NewDefaultService(authRepo, userService)
+	authService := auth.NewDefaultService(authRepo, userService, jwtSecret)
 	return Server{
 		userService,
 		authService,

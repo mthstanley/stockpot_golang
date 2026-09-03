@@ -25,6 +25,10 @@ type GetUser struct {
 	Name string `json:"name"`
 }
 
+type GetToken struct {
+	Token string `json:"token"`
+}
+
 func convertToGetUser(d *user.User) GetUser {
 	return GetUser{
 		d.ID,
@@ -71,7 +75,7 @@ func (h UserHandler) HandleGetUser(w http.ResponseWriter, r *http.Request) error
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	if _, err := w.Write(data); err != nil {
-		return fmt.Errorf("failed to write response body", err)
+		return fmt.Errorf("failed to write response body: %w", err)
 	}
 
 	return nil
@@ -91,7 +95,7 @@ func (h UserHandler) HandleGetAuthUser(w http.ResponseWriter, r *http.Request) e
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	if _, err := w.Write(data); err != nil {
-		return fmt.Errorf("failed to write response body", err)
+		return fmt.Errorf("failed to write response body: %w", err)
 	}
 
 	return nil
@@ -122,7 +126,32 @@ func (h UserHandler) HandleCreateUser(w http.ResponseWriter, r *http.Request) er
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusCreated)
 	if _, err := w.Write(data); err != nil {
-		return fmt.Errorf("failed to write response body", err)
+		return fmt.Errorf("failed to write response body: %w", err)
+	}
+
+	return nil
+}
+
+func (h UserHandler) HandleGetToken(w http.ResponseWriter, r *http.Request) error {
+	authUser, err := extractAuthUser(r)
+	if err != nil {
+		return fmt.Errorf("auth user is missing for handler requiring auth: %w", err)
+	}
+
+	token, err := h.authService.GenerateJWT(*authUser)
+	if err != nil {
+		return fmt.Errorf("failed to generate jwt: %w", err)
+	}
+
+	data, err := json.Marshal(GetToken{Token: token.Token})
+	if err != nil {
+		return fmt.Errorf("failed to json encode response body: %w", err)
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(data); err != nil {
+		return fmt.Errorf("failed to write response body: %w", err)
 	}
 
 	return nil

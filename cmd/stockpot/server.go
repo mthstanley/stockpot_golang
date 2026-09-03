@@ -25,6 +25,7 @@ type ServerConfig struct {
 	DBUsername string `mapstructure:"db-username"`
 	DBPassword string `mapstructure:"db-password"`
 	DBDatabase string `mapstructure:"db-database"`
+	JWTSecret  string `mapstructure:"jwt-secret"`
 }
 
 func init() {
@@ -34,6 +35,7 @@ func init() {
 	serverCMD.Flags().StringP("db-username", "u", "postgres", "The database username.")
 	serverCMD.Flags().StringP("db-password", "w", "postgres", "The database password.")
 	serverCMD.Flags().StringP("db-database", "d", "stockpot", "The database database.")
+	serverCMD.Flags().StringP("jwt-secret", "j", "stockpot", "Secret to be used in JWT signing algorithm.")
 }
 
 func runServer(cmd *cobra.Command, args []string) {
@@ -59,7 +61,7 @@ func runServer(cmd *cobra.Command, args []string) {
 	if err != nil {
 		log.Fatalf("main : could not connect to db : %v", err)
 	}
-	server := http.NewServer(db)
+	server := http.NewServer(db, config.JWTSecret)
 
 	err = server.Serve(config.Addr)
 
