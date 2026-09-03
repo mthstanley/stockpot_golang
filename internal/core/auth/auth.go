@@ -97,14 +97,14 @@ func (s DefaultService) Validate(ctx context.Context, credentials UserCredential
 			if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 				return nil, fmt.Errorf("password is not valid: %w: %w", InvalidCredentialsError, err)
 			}
-			return nil, fmt.Errorf("password is not valid: %w: %w", CredentialValidationError, err)
+			return nil, fmt.Errorf("unable to validate password: %w: %w", CredentialValidationError, err)
 		}
 
 		if errResult != nil {
 			aerr, ok := errors.AsType[*core.EntityNotFound](errResult)
 			authUserNotFound := ok && aerr.Type == EntityType
 			if authUserNotFound {
-				return nil, fmt.Errorf("unable to fetch auth user: %w: %w", InvalidCredentialsError, errResult)
+				return nil, fmt.Errorf("no auth user with given username: %w: %w", InvalidCredentialsError, errResult)
 			}
 			return nil, fmt.Errorf("unable to fetch auth user: %w: %w", CredentialValidationError, errResult)
 		}
@@ -121,7 +121,7 @@ func (s DefaultService) Validate(ctx context.Context, credentials UserCredential
 			authUser, err := s.repo.GetAuthUserCredentials(ctx, claims.Subject)
 			if err != nil {
 				if _, ok := errors.AsType[*core.EntityNotFound](err); ok {
-					return nil, fmt.Errorf("unable to fetch auth user by jwt subject: %w: %w", InvalidCredentialsError, err)
+					return nil, fmt.Errorf("no matching auth user for jwt subject: %w: %w", InvalidCredentialsError, err)
 				}
 				return nil, fmt.Errorf("unable to fetch auth user by jwt subject: %w: %w", CredentialValidationError, err)
 			}
