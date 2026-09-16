@@ -17,5 +17,43 @@ type AuthUser struct {
 	ID           int64
 	Username     string
 	PasswordHash string
-	AppUser      pgtype.Int8
+	AppUser      int64
+}
+
+type Ingredient struct {
+	ID   int64
+	Name string
+}
+
+type Recipe struct {
+	ID            int64
+	Title         string
+	Description   pgtype.Text
+	Author        int64
+	PrepTime      pgtype.Interval
+	CookTime      pgtype.Interval
+	InactiveTime  pgtype.Interval
+	YieldQuantity int32
+	YieldUnits    int64
+}
+
+type RecipeIngredient struct {
+	ID          int64
+	Recipe      int64
+	Ingredient  int64
+	Quantity    int32
+	Units       int64
+	Preparation string
+}
+
+type Step struct {
+	ID          int64
+	Recipe      int64
+	Ordinal     int32
+	Instruction string
+}
+
+type Unit struct {
+	ID   int64
+	Name string
 }

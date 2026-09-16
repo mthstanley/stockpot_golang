@@ -1,0 +1,52 @@
+{
+  "ID": null,
+  "Title": "Buttered Carrots",
+  "Description": "Buttery carrots in a butter sauce",
+  "Author": null,
+  "PrepTime": 360,
+  "CookTime": 400,
+  "InactiveTime": 8600,
+  "YieldQuantity": 200,
+  "YieldUnits": {
+    "ID": null,
+    "Name": "grams"
+  },
+  "Ingredients": [
+    {
+      "ID": null,
+      "RecipeID": null,
+      "Ingredient": {
+        "ID": null,
+        "Name": "carrots"
+      },
+      "Quantity": 200,
+      "Units": {
+        "ID": null,
+        "Name": "grams"
+      },
+      "Preparation": "diced"
+    },
+    {
+      "ID": null,
+      "RecipeID": null,
+      "Ingredient": {
+        "ID": null,
+        "Name": "butter"
+      },
+      "Quantity": 200,
+      "Units": {
+        "ID": null,
+        "Name": "grams"
+      },
+      "Preparation": "melted"
+    }
+  ],
+  "Steps": [
+    {
+      "ID": null,
+      "RecipeID": null,
+      "Ordinal": 1,
+      "Instruction": "Saute the carrots in the butter"
+    }
+  ]
+}
