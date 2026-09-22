@@ -9,6 +9,13 @@ type User struct {
 	Name string
 }
 
+func (u User) Equals(other User) bool {
+	if u.ID == nil {
+		return other.ID == nil
+	}
+	return *u.ID == *other.ID && u.Name == other.Name
+}
+
 const EntityType string = "user"
 
 type Repository interface {
