@@ -9,8 +9,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -41,20 +39,6 @@ func jsonEq(expectedJSON, actualJSON string) (string, error) {
 		return fmt.Sprintf("- wanted, + got: %s", diff), nil
 	}
 	return "", nil
-}
-
-func loadFixture(t *testing.T, filename string) []byte {
-	t.Helper() // Corrects line numbers in error logs
-
-	// Path is relative to the package directory
-	path := filepath.Join("fixtures", filename)
-
-	data, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatalf("failed to read fixture %s: %v", filename, err)
-	}
-
-	return data
 }
 
 func setupDB(ctx context.Context, t *testing.T) *pgxpool.Pool {
