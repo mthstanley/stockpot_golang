@@ -73,7 +73,7 @@ func (j *JSONSeconds) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	val := time.Duration(seconds * int(time.Second))
+	val := time.Duration(seconds) * time.Second
 
 	*j = JSONSeconds(val)
 	return nil
