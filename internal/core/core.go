@@ -9,7 +9,7 @@ type EntityNotFound struct {
 }
 
 func (e *EntityNotFound) Error() string {
-	return fmt.Sprintf("%s entity with identifier %d not found", e.Type, e.Ident)
+	return fmt.Sprintf("%s entity with identifier %s not found", e.Type, e.Ident)
 }
 
 func (e *EntityNotFound) Unwrap() error {

@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	db "github.com/mthstanley/stockpot/db/sqlc"
 	"github.com/mthstanley/stockpot/internal/core"
@@ -18,7 +17,7 @@ func convertToAuthUserCredentialsDomainModel(authUser db.AuthUser) *auth.AuthUse
 		ID:           &authUser.ID,
 		Username:     authUser.Username,
 		PasswordHash: authUser.PasswordHash,
-		UserID:       authUser.AppUser.Int64,
+		UserID:       authUser.AppUser,
 	}
 }
 
@@ -47,7 +46,7 @@ func (r AuthUserRepository) CreateAuthUserCredentials(ctx context.Context, authU
 	createdAuthUser, err := queries.CreateAuthUser(ctx, db.CreateAuthUserParams{
 		Username:     authUser.Username,
 		PasswordHash: authUser.PasswordHash,
-		AppUser:      pgtype.Int8{Int64: authUser.UserID, Valid: true},
+		AppUser:      authUser.UserID,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create auth user: %w", err)

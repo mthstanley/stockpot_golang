@@ -7,8 +7,6 @@ package db
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createAuthUser = `-- name: CreateAuthUser :one
@@ -18,7 +16,7 @@ INSERT INTO auth_user (username, password_hash, app_user) values ($1, $2, $3) RE
 type CreateAuthUserParams struct {
 	Username     string
 	PasswordHash string
-	AppUser      pgtype.Int8
+	AppUser      int64
 }
 
 func (q *Queries) CreateAuthUser(ctx context.Context, arg CreateAuthUserParams) (AuthUser, error) {
