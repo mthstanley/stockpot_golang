@@ -82,7 +82,7 @@ func setupHTTPServer(ctx context.Context, t *testing.T) *httptest.Server {
 	recipeService := recipe.NewDefaultService(recipeRepo)
 
 	router := stockpothttp.NewRouter(userService, authService, recipeService)
-	server := httptest.NewServer(router)
+	server := httptest.NewServer(*router)
 
 	t.Cleanup(func() {
 		server.Close()

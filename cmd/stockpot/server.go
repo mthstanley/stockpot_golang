@@ -29,7 +29,7 @@ type ServerConfig struct {
 }
 
 func init() {
-	serverCMD.Flags().StringP("addr", "a", "0.0.0.0:8000", "The host and port the API should bind to")
+	serverCMD.Flags().StringP("addr", "a", "0.0.0.0:8080", "The host and port the API should bind to")
 	serverCMD.Flags().StringP("db-host", "o", "localhost", "The database host.")
 	serverCMD.Flags().StringP("db-port", "p", "5432", "The database port.")
 	serverCMD.Flags().StringP("db-username", "u", "postgres", "The database username.")

@@ -41,7 +41,7 @@ func (s Server) Serve(addr string) error {
 
 	api := http.Server{
 		Addr:         addr,
-		Handler:      router,
+		Handler:      *router,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
 	}
