@@ -321,7 +321,7 @@ func (h RecipeHandler) HandleGetRecipes(w http.ResponseWriter, r *http.Request) 
 		return fmt.Errorf("failed to get recipe: %w", err)
 	}
 
-	var getRecipes []GetRecipe
+	getRecipes := []GetRecipe{}
 	for _, rec := range recipes {
 		getRecipes = append(getRecipes, convertToGetRecipe(rec))
 	}
