@@ -6,7 +6,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: stockpot
+  IMAGE_NAME: mthstanley/stockpot
 
 jobs:
   build-and-push-api-image:
