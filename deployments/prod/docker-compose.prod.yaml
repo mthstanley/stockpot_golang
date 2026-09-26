@@ -19,7 +19,7 @@ services:
       timeout: 10s
 
   migrate:
-    image: ghcr.io/mthstanley/stockpot-api:sha-45b9519
+    image: ghcr.io/mthstanley/stockpot-api:local
     entrypoint: sh -c "./stockpot --config configs/stockpot.yaml migrate"
     env_file:
       - .env
@@ -29,7 +29,7 @@ services:
         restart: true
 
   api:
-    image: ghcr.io/mthstanley/stockpot-api:sha-45b9519
+    image: ghcr.io/mthstanley/stockpot-api:local
     restart: unless-stopped
     container_name: api
     env_file:
@@ -39,7 +39,7 @@ services:
         condition: service_completed_successfully
 
   frontend:
-    image: ghcr.io/mthstanley/stockpot-frontend:sha-45b9519
+    image: ghcr.io/mthstanley/stockpot-frontend:local
     restart: unless-stopped
     env_file:
       - .env
@@ -51,7 +51,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/conf/:/etc/nginx/conf.d/:ro
+      - ./nginx/conf/:/etc/nginx/:ro
       - ./certbot/www/:/var/www/certbot/:ro
     depends_on:
       - api

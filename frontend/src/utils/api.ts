@@ -4,7 +4,6 @@ import axios, {
   AxiosResponse,
   InternalAxiosRequestConfig,
 } from "axios";
-import { config } from "../config";
 import { camelKeys, snakeKeys } from "./case";
 
 export interface GetUserResponse {
@@ -94,8 +93,8 @@ class ApiClient {
   client: AxiosInstance;
   tokenExpirationCallback: VoidFunction;
 
-  constructor(urlBase: URL) {
-    this.client = axios.create({ baseURL: urlBase.toString() });
+  constructor() {
+    this.client = axios.create({ baseURL: "/api" });
     this.client.defaults.headers.post["Content-Type"] = "application/json";
     this.tokenExpirationCallback = () => {};
     this.client.interceptors.response.use(
@@ -209,4 +208,4 @@ class ApiClient {
   }
 }
 
-export const apiClient = new ApiClient(config.apiBaseUrl);
+export const apiClient = new ApiClient();
