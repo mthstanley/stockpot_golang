@@ -20,9 +20,10 @@ type Server struct {
 	userService   user.Service
 	authService   auth.Service
 	recipeService recipe.Service
+	apiDomain     string
 }
 
-func NewServer(db *pgxpool.Pool, jwtSecret string) Server {
+func NewServer(db *pgxpool.Pool, jwtSecret string, apiDomain string) Server {
 	userRepo := postgres.NewUserRepository(db)
 	userService := user.NewDefaultService(userRepo)
 	authRepo := postgres.NewAuthUserRepository(db)
@@ -33,11 +34,12 @@ func NewServer(db *pgxpool.Pool, jwtSecret string) Server {
 		userService,
 		authService,
 		recipeService,
+		apiDomain,
 	}
 }
 
 func (s Server) Serve(addr string) error {
-	router := NewRouter(s.userService, s.authService, s.recipeService)
+	router := NewRouter(s.userService, s.authService, s.recipeService, s.apiDomain)
 
 	api := http.Server{
 		Addr:         addr,
