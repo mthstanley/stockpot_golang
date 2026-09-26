@@ -20,6 +20,7 @@ var serverCMD = &cobra.Command{
 
 type ServerConfig struct {
 	Addr       string `mapstructure:"addr"`
+	APIDomain  string `mapstructure:"api-domain"`
 	DBHost     string `mapstructure:"db-host"`
 	DBPort     string `mapstructure:"db-port"`
 	DBUsername string `mapstructure:"db-username"`
@@ -30,6 +31,7 @@ type ServerConfig struct {
 
 func init() {
 	serverCMD.Flags().StringP("addr", "a", "0.0.0.0:8080", "The host and port the API should bind to")
+	serverCMD.Flags().StringP("api-domain", "n", "http://localhost", "The domain name of the API")
 	serverCMD.Flags().StringP("db-host", "o", "localhost", "The database host.")
 	serverCMD.Flags().StringP("db-port", "p", "5432", "The database port.")
 	serverCMD.Flags().StringP("db-username", "u", "postgres", "The database username.")
@@ -61,7 +63,7 @@ func runServer(cmd *cobra.Command, args []string) {
 	if err != nil {
 		log.Fatalf("main : could not connect to db : %v", err)
 	}
-	server := http.NewServer(db, config.JWTSecret)
+	server := http.NewServer(db, config.JWTSecret, config.APIDomain)
 
 	err = server.Serve(config.Addr)
 

@@ -11,7 +11,7 @@ import (
 
 type HandlerFuncWithError = func(w http.ResponseWriter, r *http.Request) error
 
-func NewRouter(userService user.Service, authService auth.Service, recipeService recipe.Service) *http.Handler {
+func NewRouter(userService user.Service, authService auth.Service, recipeService recipe.Service, apiDomain string) *http.Handler {
 	userHandler := NewUserHandler(userService, authService)
 	validateAuth := ValidateAuth(authService)
 	recipeHandler := NewRecipeHandler(recipeService)
@@ -29,7 +29,14 @@ func NewRouter(userService user.Service, authService auth.Service, recipeService
 	mux.Handle("POST /recipe/{id}", validateAuth(HandleErrors(recipeHandler.HandleUpdateRecipe)))
 	mux.Handle("DELETE /recipe/{id}", validateAuth(HandleErrors(recipeHandler.HandleDeleteRecipe)))
 
-	router := cors.AllowAll().Handler(mux)
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{apiDomain},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Authorization", "Content-Type"},
+		AllowCredentials: true,
+		Debug:            false,
+	})
+	router := c.Handler(mux)
 
 	return &router
 }
