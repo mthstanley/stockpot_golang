@@ -1,5 +1,6 @@
 import { NavLink } from "react-router";
 import { useAuth } from "../auth/authContext";
+import { config } from "../../config";
 
 const Navbar = () => {
   const auth = useAuth();
@@ -32,9 +33,11 @@ const Navbar = () => {
                 <li>
                   <NavLink to="users/signin">Sign-in</NavLink>
                 </li>
-                <li>
-                  <NavLink to="users/signup">Sign-up</NavLink>
-                </li>
+                {!config.disableUserSignup && (
+                  <li>
+                    <NavLink to="users/signup">Sign-up</NavLink>
+                  </li>
+                )}
               </>
             )}
           </ul>

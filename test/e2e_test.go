@@ -71,7 +71,11 @@ func setupDB(ctx context.Context, t *testing.T) *pgxpool.Pool {
 	return pool
 }
 
-func setupHTTPServer(ctx context.Context, t *testing.T) *httptest.Server {
+type serverConfig struct {
+	disableUserSignup bool
+}
+
+func setupHTTPServer(ctx context.Context, t *testing.T, config serverConfig) *httptest.Server {
 	db := setupDB(ctx, t)
 
 	userRepo := postgres.NewUserRepository(db)
@@ -81,7 +85,7 @@ func setupHTTPServer(ctx context.Context, t *testing.T) *httptest.Server {
 	recipeRepo := postgres.NewRecipeRepository(db)
 	recipeService := recipe.NewDefaultService(recipeRepo)
 
-	router := stockpothttp.NewRouter(userService, authService, recipeService)
+	router := stockpothttp.NewRouter(userService, authService, recipeService, "localhost", config.disableUserSignup)
 	server := httptest.NewServer(*router)
 
 	t.Cleanup(func() {
@@ -93,7 +97,7 @@ func setupHTTPServer(ctx context.Context, t *testing.T) *httptest.Server {
 
 func TestNonExistantRoute(t *testing.T) {
 	ctx := context.Background()
-	server := setupHTTPServer(ctx, t)
+	server := setupHTTPServer(ctx, t, serverConfig{disableUserSignup: false})
 
 	res, err := server.Client().Get(server.URL + "/undefined")
 	if err != nil {
@@ -113,9 +117,31 @@ func TestNonExistantRoute(t *testing.T) {
 	}
 }
 
+func TestDisableUserSignup(t *testing.T) {
+	ctx := context.Background()
+	server := setupHTTPServer(ctx, t, serverConfig{disableUserSignup: true})
+
+	res, err := server.Client().Post(server.URL+"/user", "application/json", strings.NewReader(`{"username": "test", "password": "secret", "name": "joe"}`))
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	defer res.Body.Close()
+
+	actual, _ := io.ReadAll(res.Body)
+	expected := "404 page not found\n"
+	if string(actual) != expected {
+		t.Errorf("expected %s, got %s", expected, actual)
+	}
+
+	expectedCode := 404
+	if res.StatusCode != expectedCode {
+		t.Errorf("expected status code %d, got %d", expectedCode, res.StatusCode)
+	}
+}
+
 func TestCreateUser(t *testing.T) {
 	ctx := context.Background()
-	server := setupHTTPServer(ctx, t)
+	server := setupHTTPServer(ctx, t, serverConfig{disableUserSignup: false})
 
 	res, err := server.Client().Post(server.URL+"/user", "application/json", strings.NewReader(`{"username": "test", "password": "secret", "name": "joe"}`))
 	if err != nil {
@@ -137,7 +163,7 @@ func TestCreateUser(t *testing.T) {
 
 func TestGetNonExistantUser(t *testing.T) {
 	ctx := context.Background()
-	server := setupHTTPServer(ctx, t)
+	server := setupHTTPServer(ctx, t, serverConfig{disableUserSignup: false})
 
 	res, err := server.Client().Get(server.URL + "/user/1")
 	if err != nil {
@@ -159,7 +185,7 @@ func TestGetNonExistantUser(t *testing.T) {
 
 func TestGetExistingUser(t *testing.T) {
 	ctx := context.Background()
-	server := setupHTTPServer(ctx, t)
+	server := setupHTTPServer(ctx, t, serverConfig{disableUserSignup: false})
 
 	_, err := server.Client().Post(server.URL+"/user", "application/json", strings.NewReader(`{"username": "test", "password": "secret", "name": "joe"}`))
 	if err != nil {
@@ -186,7 +212,7 @@ func TestGetExistingUser(t *testing.T) {
 
 func TestGetInvalidUserID(t *testing.T) {
 	ctx := context.Background()
-	server := setupHTTPServer(ctx, t)
+	server := setupHTTPServer(ctx, t, serverConfig{disableUserSignup: false})
 
 	res, err := server.Client().Get(server.URL + "/user/foo")
 	if err != nil {
@@ -208,7 +234,7 @@ func TestGetInvalidUserID(t *testing.T) {
 
 func TestErrorMissingCredentials(t *testing.T) {
 	ctx := context.Background()
-	server := setupHTTPServer(ctx, t)
+	server := setupHTTPServer(ctx, t, serverConfig{disableUserSignup: false})
 
 	res, err := server.Client().Get(server.URL + "/user/auth")
 	if err != nil {
@@ -230,7 +256,7 @@ func TestErrorMissingCredentials(t *testing.T) {
 
 func TestSuccessfulAuthentication(t *testing.T) {
 	ctx := context.Background()
-	server := setupHTTPServer(ctx, t)
+	server := setupHTTPServer(ctx, t, serverConfig{disableUserSignup: false})
 
 	_, err := server.Client().Post(server.URL+"/user", "application/json", strings.NewReader(`{"username": "test", "password": "secret", "name": "joe"}`))
 	if err != nil {
@@ -262,14 +288,14 @@ func TestSuccessfulAuthentication(t *testing.T) {
 
 func TestTokenAuthenticationFlow(t *testing.T) {
 	ctx := context.Background()
-	server := setupHTTPServer(ctx, t)
+	server := setupHTTPServer(ctx, t, serverConfig{disableUserSignup: false})
 
 	_, err := server.Client().Post(server.URL+"/user", "application/json", strings.NewReader(`{"username": "test", "password": "secret", "name": "joe"}`))
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	req, err := http.NewRequest("GET", server.URL+"/user/token", nil)
+	req, err := http.NewRequest("POST", server.URL+"/user/token", nil)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -311,7 +337,7 @@ func TestTokenAuthenticationFlow(t *testing.T) {
 
 func TestCreateRecipe(t *testing.T) {
 	ctx := context.Background()
-	server := setupHTTPServer(ctx, t)
+	server := setupHTTPServer(ctx, t, serverConfig{disableUserSignup: false})
 
 	_, err := server.Client().Post(server.URL+"/user", "application/json", strings.NewReader(`{"username": "test", "password": "secret", "name": "joe"}`))
 	if err != nil {
@@ -435,7 +461,7 @@ func TestCreateRecipe(t *testing.T) {
 
 func TestUpdateRecipeAddNewIngredient(t *testing.T) {
 	ctx := context.Background()
-	server := setupHTTPServer(ctx, t)
+	server := setupHTTPServer(ctx, t, serverConfig{disableUserSignup: false})
 
 	_, err := server.Client().Post(server.URL+"/user", "application/json", strings.NewReader(`{"username": "test", "password": "secret", "name": "joe"}`))
 	if err != nil {
@@ -597,7 +623,7 @@ func TestUpdateRecipeAddNewIngredient(t *testing.T) {
 
 func TestUpdateRecipeAddNewStep(t *testing.T) {
 	ctx := context.Background()
-	server := setupHTTPServer(ctx, t)
+	server := setupHTTPServer(ctx, t, serverConfig{disableUserSignup: false})
 
 	_, err := server.Client().Post(server.URL+"/user", "application/json", strings.NewReader(`{"username": "test", "password": "secret", "name": "joe"}`))
 	if err != nil {
@@ -755,7 +781,7 @@ func TestUpdateRecipeAddNewStep(t *testing.T) {
 
 func TestUpdateRecipeChangeExistingFields(t *testing.T) {
 	ctx := context.Background()
-	server := setupHTTPServer(ctx, t)
+	server := setupHTTPServer(ctx, t, serverConfig{disableUserSignup: false})
 
 	_, err := server.Client().Post(server.URL+"/user", "application/json", strings.NewReader(`{"username": "test", "password": "secret", "name": "joe"}`))
 	if err != nil {
@@ -905,7 +931,7 @@ func TestUpdateRecipeChangeExistingFields(t *testing.T) {
 
 func TestUpdateRecipeRemoveIngredientStep(t *testing.T) {
 	ctx := context.Background()
-	server := setupHTTPServer(ctx, t)
+	server := setupHTTPServer(ctx, t, serverConfig{disableUserSignup: false})
 
 	_, err := server.Client().Post(server.URL+"/user", "application/json", strings.NewReader(`{"username": "test", "password": "secret", "name": "joe"}`))
 	if err != nil {
@@ -1065,7 +1091,7 @@ func TestUpdateRecipeRemoveIngredientStep(t *testing.T) {
 
 func TestDeleteRecipe(t *testing.T) {
 	ctx := context.Background()
-	server := setupHTTPServer(ctx, t)
+	server := setupHTTPServer(ctx, t, serverConfig{disableUserSignup: false})
 
 	_, err := server.Client().Post(server.URL+"/user", "application/json", strings.NewReader(`{"username": "test", "password": "secret", "name": "joe"}`))
 	if err != nil {
