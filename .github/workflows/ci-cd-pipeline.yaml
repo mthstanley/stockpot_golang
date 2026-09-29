@@ -87,17 +87,9 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_DEPLOY_KEY }}
-          source: "deployments/prod/config.js,deployments/prod/docker-compose.yaml"
+          source: "deployments/prod/config.js,deployments/prod/docker-compose.yaml,deployments/prod/nginx/conf/nginx.conf"
           target: "/home/deploy/stockpot"
-      - name: Copy nested deploy files
-        uses: appleboy/scp-action@v1
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_DEPLOY_KEY }}
-          source: "deployments/prod/nginx/conf/nginx.conf"
-          target: "/home/deploy/stockpot/nginx/conf"
+          strip_components: 2
       - name: SSH & Deploy
         uses: appleboy/ssh-action@v1
         env:
