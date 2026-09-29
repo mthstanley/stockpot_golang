@@ -19,14 +19,15 @@ var serverCMD = &cobra.Command{
 }
 
 type ServerConfig struct {
-	Addr       string `mapstructure:"addr"`
-	APIDomain  string `mapstructure:"api-domain"`
-	DBHost     string `mapstructure:"db-host"`
-	DBPort     string `mapstructure:"db-port"`
-	DBUsername string `mapstructure:"db-username"`
-	DBPassword string `mapstructure:"db-password"`
-	DBDatabase string `mapstructure:"db-database"`
-	JWTSecret  string `mapstructure:"jwt-secret"`
+	Addr              string `mapstructure:"addr"`
+	APIDomain         string `mapstructure:"api-domain"`
+	DBHost            string `mapstructure:"db-host"`
+	DBPort            string `mapstructure:"db-port"`
+	DBUsername        string `mapstructure:"db-username"`
+	DBPassword        string `mapstructure:"db-password"`
+	DBDatabase        string `mapstructure:"db-database"`
+	JWTSecret         string `mapstructure:"jwt-secret"`
+	DisableUserSignup bool   `mapstructure:"disable-user-signup"`
 }
 
 func init() {
@@ -38,6 +39,7 @@ func init() {
 	serverCMD.Flags().StringP("db-password", "w", "postgres", "The database password.")
 	serverCMD.Flags().StringP("db-database", "d", "stockpot", "The database database.")
 	serverCMD.Flags().StringP("jwt-secret", "j", "stockpot", "Secret to be used in JWT signing algorithm.")
+	serverCMD.Flags().Bool("disable-user-signup", false, "Conditionally disable mounting user creation endpoint")
 }
 
 func runServer(cmd *cobra.Command, args []string) {
@@ -63,7 +65,7 @@ func runServer(cmd *cobra.Command, args []string) {
 	if err != nil {
 		log.Fatalf("main : could not connect to db : %v", err)
 	}
-	server := http.NewServer(db, config.JWTSecret, config.APIDomain)
+	server := http.NewServer(db, config.JWTSecret, config.APIDomain, config.DisableUserSignup)
 
 	err = server.Serve(config.Addr)
 

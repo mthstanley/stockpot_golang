@@ -11,7 +11,7 @@ import (
 
 type HandlerFuncWithError = func(w http.ResponseWriter, r *http.Request) error
 
-func NewRouter(userService user.Service, authService auth.Service, recipeService recipe.Service, apiDomain string) *http.Handler {
+func NewRouter(userService user.Service, authService auth.Service, recipeService recipe.Service, apiDomain string, disableUserSignup bool) *http.Handler {
 	userHandler := NewUserHandler(userService, authService)
 	validateAuth := ValidateAuth(authService)
 	recipeHandler := NewRecipeHandler(recipeService)
@@ -19,7 +19,9 @@ func NewRouter(userService user.Service, authService auth.Service, recipeService
 	mux := http.NewServeMux()
 
 	mux.Handle("GET /user/{id}", HandleErrors(userHandler.HandleGetUser))
-	mux.Handle("POST /user", HandleErrors(userHandler.HandleCreateUser))
+	if !disableUserSignup {
+		mux.Handle("POST /user", HandleErrors(userHandler.HandleCreateUser))
+	}
 	mux.Handle("GET /user/auth", validateAuth(HandleErrors(userHandler.HandleGetAuthUser)))
 	mux.Handle("POST /user/token", validateAuth(HandleErrors(userHandler.HandleGetToken)))
 
