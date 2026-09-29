@@ -32,7 +32,6 @@ services:
 
   api:
     image: ghcr.io/mthstanley/stockpot-api:${IMAGE_TAG}
-
     restart: unless-stopped
     container_name: api
     env_file:
