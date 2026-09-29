@@ -1,3 +1,3 @@
 window.env = {
-  DISABLE_USER_SIGNUP: false,
+  DISABLE_USER_SIGNUP: true,
 };
