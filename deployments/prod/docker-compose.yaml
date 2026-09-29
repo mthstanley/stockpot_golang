@@ -21,7 +21,7 @@ services:
       timeout: 10s
 
   migrate:
-    image: ghcr.io/mthstanley/stockpot-api:local
+    image: ghcr.io/mthstanley/stockpot-api:${IMAGE_TAG}
     entrypoint: sh -c "./stockpot --config configs/stockpot.yaml migrate"
     env_file:
       - .env
@@ -31,7 +31,8 @@ services:
         restart: true
 
   api:
-    image: ghcr.io/mthstanley/stockpot-api:local
+    image: ghcr.io/mthstanley/stockpot-api:${IMAGE_TAG}
+
     restart: unless-stopped
     container_name: api
     env_file:
@@ -41,7 +42,7 @@ services:
         condition: service_completed_successfully
 
   frontend:
-    image: ghcr.io/mthstanley/stockpot-frontend:local
+    image: ghcr.io/mthstanley/stockpot-frontend:${IMAGE_TAG}
     restart: unless-stopped
     env_file:
       - .env
