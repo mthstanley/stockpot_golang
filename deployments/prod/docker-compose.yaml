@@ -21,7 +21,7 @@ services:
       timeout: 10s
 
   migrate:
-    image: ${IMAGE_TAG}
+    image: ${API_IMAGE_TAG}
     entrypoint: sh -c "./stockpot --config configs/stockpot.yaml migrate"
     env_file:
       - .env
@@ -31,7 +31,7 @@ services:
         restart: true
 
   api:
-    image: ${IMAGE_TAG}
+    image: ${API_IMAGE_TAG}
     restart: unless-stopped
     container_name: api
     env_file:
@@ -41,7 +41,7 @@ services:
         condition: service_completed_successfully
 
   frontend:
-    image: ${IMAGE_TAG}
+    image: ${FRONTEND_IMAGE_TAG}
     restart: unless-stopped
     env_file:
       - .env
