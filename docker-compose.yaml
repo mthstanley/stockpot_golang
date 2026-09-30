@@ -22,23 +22,22 @@ services:
 
   migrate:
     build:
-      context: ..
+      context: .
       dockerfile: build/api.dockerfile
     entrypoint: sh -c "./stockpot --config configs/stockpot.yaml migrate"
     env_file:
-      - ../.env
+      - .env
     depends_on:
       postgres:
         condition: service_healthy
         restart: true
 
-  stockpot:
+  api:
     build:
-      context: ..
+      context: .
       dockerfile: build/api.dockerfile
-    container_name: stockpot
     env_file:
-      - ../.env
+      - .env
     image: stockpot
     ports:
       - 8080:8080 # CRUD API
