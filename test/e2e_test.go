@@ -438,7 +438,12 @@ func TestCreateRecipe(t *testing.T) {
 		t.Errorf("expected status code %d, got %d", expectedCode, res.StatusCode)
 	}
 
-	res, err = server.Client().Get(server.URL + "/recipe/1")
+	req, err = http.NewRequest("GET", server.URL+"/recipe/1", nil)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	res, err = server.Client().Do(req)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -600,7 +605,12 @@ func TestUpdateRecipeAddNewIngredient(t *testing.T) {
 		t.Errorf("expected status code %d, got %d", expectedCode, res.StatusCode)
 	}
 
-	res, err = server.Client().Get(server.URL + "/recipe/1")
+	req, err = http.NewRequest("GET", server.URL+"/recipe/1", nil)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	res, err = server.Client().Do(req)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -758,7 +768,12 @@ func TestUpdateRecipeAddNewStep(t *testing.T) {
 		t.Errorf("expected status code %d, got %d", expectedCode, res.StatusCode)
 	}
 
-	res, err = server.Client().Get(server.URL + "/recipe/1")
+	req, err = http.NewRequest("GET", server.URL+"/recipe/1", nil)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	res, err = server.Client().Do(req)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -908,7 +923,12 @@ func TestUpdateRecipeChangeExistingFields(t *testing.T) {
 		t.Errorf("expected status code %d, got %d", expectedCode, res.StatusCode)
 	}
 
-	res, err = server.Client().Get(server.URL + "/recipe/1")
+	req, err = http.NewRequest("GET", server.URL+"/recipe/1", nil)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	res, err = server.Client().Do(req)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -1068,7 +1088,12 @@ func TestUpdateRecipeRemoveIngredientStep(t *testing.T) {
 		t.Errorf("expected status code %d, got %d", expectedCode, res.StatusCode)
 	}
 
-	res, err = server.Client().Get(server.URL + "/recipe/1")
+	req, err = http.NewRequest("GET", server.URL+"/recipe/1", nil)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	res, err = server.Client().Do(req)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -1192,7 +1217,12 @@ func TestDeleteRecipe(t *testing.T) {
 		t.Errorf("expected status code %d, got %d", expectedCode, res.StatusCode)
 	}
 
-	res, err = server.Client().Get(server.URL + "/recipe/1")
+	req, err = http.NewRequest("GET", server.URL+"/recipe/1", nil)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	res, err = server.Client().Do(req)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -1237,7 +1267,12 @@ func TestDeleteRecipe(t *testing.T) {
 		t.Errorf("expected status code %d, got %d", expectedCode, res.StatusCode)
 	}
 
-	res, err = server.Client().Get(server.URL + "/recipe/1")
+	req, err = http.NewRequest("GET", server.URL+"/recipe/1", nil)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	res, err = server.Client().Do(req)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
