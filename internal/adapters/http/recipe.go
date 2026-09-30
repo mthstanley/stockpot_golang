@@ -311,24 +311,25 @@ func (u UpdateRecipe) convertToRecipe(id int64, author user.User) recipe.Recipe 
 }
 
 type RecipeSchema struct {
-	Context          string   `json:"@context"`
-	Type             string   `json:"@type"`
-	Name             string   `json:"name"`
-	RecipeYield      string   `json:"recipeYield"`
-	RecipeIngredient []string `json:"recipeIngredient"`
+	Context            string   `json:"@context"`
+	Type               string   `json:"@type"`
+	Name               string   `json:"name"`
+	RecipeIngredient   []string `json:"recipeIngredient"`
+	RecipeInstructions []string `json:"recipeInstructions"`
 }
 
 func NewRecipeSchema() *RecipeSchema {
 	return &RecipeSchema{
-		Context:     "https://schema.org",
-		Type:        "Recipe",
-		RecipeYield: "4 servings",
+		Context: "https://schema.org",
+		Type:    "Recipe",
 	}
 }
 
 type HTMLRecipeData struct {
-	JSONLD            template.JS
-	RecipeIngredients []string
+	JSONLD             template.JS
+	Name               string
+	RecipeIngredients  []string
+	RecipeInstructions []string
 }
 
 type RecipeHandler struct {
@@ -386,13 +387,22 @@ func (h RecipeHandler) HandleGetRecipe(w http.ResponseWriter, r *http.Request) e
 			<meta name="viewport" content="width=device-width, initial-scale=1.0">
 			<script type="application/ld+json">{{ .JSONLD }}</script>
 		</head>
-		<body>
-			Ingredients:
+		<body itemscope itemtype="https://schema.org/Recipe">
+			<h1 itemprop="name">{{ .Name }}</h1>
+
+			<h3>Ingredients:</h3>
 			<ul>
 			{{ range .RecipeIngredients }}
 			<li itemprop="recipeIngredient">{{ . }}</li>
 			{{ end }}
 			</ul>
+
+			<h3>Instructions:</h3>
+			<ol>
+			{{ range .RecipeInstructions }}
+			<li itemprop="recipeInstructions">{{ . }}</li>
+			{{ end }}
+			</ol>
 		</body>
 		</html>
 		`
@@ -401,10 +411,15 @@ func (h RecipeHandler) HandleGetRecipe(w http.ResponseWriter, r *http.Request) e
 		for _, i := range rec.Ingredients {
 			ingredients = append(ingredients, fmt.Sprintf("%d %s %s", i.Quantity, i.Units.Name, i.Ingredient.Name))
 		}
+		instructions := []string{}
+		for _, i := range rec.Steps {
+			instructions = append(instructions, i.Instruction)
+		}
 
 		schema := NewRecipeSchema()
 		schema.Name = rec.Title
 		schema.RecipeIngredient = ingredients
+		schema.RecipeInstructions = instructions
 
 		tmpl, err := template.New("recipe").Parse(htmlTemplate)
 		if err != nil {
@@ -417,8 +432,10 @@ func (h RecipeHandler) HandleGetRecipe(w http.ResponseWriter, r *http.Request) e
 		}
 
 		renderData := HTMLRecipeData{
-			JSONLD:            template.JS(data),
-			RecipeIngredients: schema.RecipeIngredient,
+			JSONLD:             template.JS(data),
+			Name:               rec.Title,
+			RecipeIngredients:  schema.RecipeIngredient,
+			RecipeInstructions: schema.RecipeInstructions,
 		}
 
 		var result bytes.Buffer
