@@ -111,13 +111,12 @@ nav {
 
     .brand {
       height: 100%;
-      display: table;
+      display: flex;
+      align-items: center;
       padding: 14px 16px;
 
       h2 {
         margin: 0;
-        display: table-cell;
-        vertical-align: middle;
       }
     }
 
