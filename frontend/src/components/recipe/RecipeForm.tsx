@@ -103,14 +103,13 @@ const RecipeForm = ({ recipe }: { recipe?: MutateRecipeRequest }) => {
               />
               <select
                 id="yieldUnits"
+                defaultValue="grams"
                 {...register("yieldUnits", {
                   required: true,
                   setValueAs: setEmptyOrStr,
                 })}
               >
-                <option value="grams" selected>
-                  grams
-                </option>
+                <option value="grams">grams</option>
               </select>
             </dd>
           </dl>
@@ -134,14 +133,13 @@ const RecipeForm = ({ recipe }: { recipe?: MutateRecipeRequest }) => {
                     />
                     <select
                       id={`ingredients.${index}.units`}
+                      defaultValue="grams"
                       {...register(`ingredients.${index}.units`, {
                         required: true,
                         setValueAs: setEmptyOrStr,
                       })}
                     >
-                      <option value="grams" selected>
-                        grams
-                      </option>
+                      <option value="grams">grams</option>
                     </select>
                     <input
                       id={`ingredients.${index}.ingredient`}
