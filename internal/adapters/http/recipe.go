@@ -399,7 +399,7 @@ func (h RecipeHandler) HandleGetRecipe(w http.ResponseWriter, r *http.Request) e
 
 		ingredients := []string{}
 		for _, i := range rec.Ingredients {
-			ingredients = append(ingredients, fmt.Sprintf("%d %s %s, %s", i.Quantity, i.Units.Name, i.Ingredient.Name, i.Preparation))
+			ingredients = append(ingredients, fmt.Sprintf("%d %s %s", i.Quantity, i.Units.Name, i.Ingredient.Name))
 		}
 
 		schema := NewRecipeSchema()
