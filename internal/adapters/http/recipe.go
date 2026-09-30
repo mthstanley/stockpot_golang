@@ -314,13 +314,15 @@ type RecipeSchema struct {
 	Context          string   `json:"@context"`
 	Type             string   `json:"@type"`
 	Name             string   `json:"name"`
+	RecipeYield      string   `json:"recipeYield"`
 	RecipeIngredient []string `json:"recipeIngredient"`
 }
 
 func NewRecipeSchema() *RecipeSchema {
 	return &RecipeSchema{
-		Context: "https://schema.org",
-		Type:    "Recipe",
+		Context:     "https://schema.org",
+		Type:        "Recipe",
+		RecipeYield: "4 servings",
 	}
 }
 
@@ -386,9 +388,9 @@ func (h RecipeHandler) HandleGetRecipe(w http.ResponseWriter, r *http.Request) e
 		</head>
 		<body>
 			Ingredients:
-			<ul class="wprm-recipe-ingredients">
+			<ul>
 			{{ range .RecipeIngredients }}
-			<li itemprop="recipeIngredient" class="wprm-recipe-ingredient">{{ . }}</li>
+			<li itemprop="recipeIngredient">{{ . }}</li>
 			{{ end }}
 			</ul>
 		</body>
