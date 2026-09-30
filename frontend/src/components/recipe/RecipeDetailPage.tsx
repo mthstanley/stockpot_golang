@@ -7,6 +7,7 @@ import {
 } from "../../utils/api";
 import { useEffect, useState } from "react";
 import RecipeMeta from "./RecipeMeta";
+import RecipeSchema from "./RecipeSchema";
 
 const RecipeDetailPage = () => {
   const { id } = useParams();
@@ -23,6 +24,7 @@ const RecipeDetailPage = () => {
     recipe && (
       <>
         <article className="recipe">
+          <RecipeSchema recipe={recipe} />
           <header className="summary">
             <hgroup className="title">
               <h1>

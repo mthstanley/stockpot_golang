@@ -17,6 +17,8 @@
     "frontend"
   ],
   "dependencies": {
-    "react-hook-form": "^7.54.2"
+    "react-hook-form": "^7.54.2",
+    "react-schemaorg": "^2.0.1",
+    "schema-dts": "^2.0.0"
   }
 }
