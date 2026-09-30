@@ -378,7 +378,18 @@ func (h RecipeHandler) HandleGetRecipe(w http.ResponseWriter, r *http.Request) e
 	acceptHeader := r.Header.Get("Accept")
 
 	switch {
-	case strings.Contains(acceptHeader, "text/html"):
+	case strings.Contains(acceptHeader, "application/json"):
+		data, err := json.Marshal(convertToGetRecipe(*rec))
+		if err != nil {
+			return fmt.Errorf("failed to json encode response body: %w", err)
+		}
+
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		if _, err := w.Write(data); err != nil {
+			return fmt.Errorf("failed to write response body: %w", err)
+		}
+	default:
 		htmlTemplate := `
 		<!DOCTYPE html>
 		<html lang="en">
@@ -398,9 +409,9 @@ func (h RecipeHandler) HandleGetRecipe(w http.ResponseWriter, r *http.Request) e
 			</ul>
 
 			<h3>Instructions:</h3>
-			<ol>
+			<ol itemprop="recipeInstructions">
 			{{ range .RecipeInstructions }}
-			<li itemprop="recipeInstructions">{{ . }}</li>
+			<li>{{ . }}</li>
 			{{ end }}
 			</ol>
 		</body>
@@ -447,17 +458,6 @@ func (h RecipeHandler) HandleGetRecipe(w http.ResponseWriter, r *http.Request) e
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, result.String())
-	default:
-		data, err := json.Marshal(convertToGetRecipe(*rec))
-		if err != nil {
-			return fmt.Errorf("failed to json encode response body: %w", err)
-		}
-
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(http.StatusOK)
-		if _, err := w.Write(data); err != nil {
-			return fmt.Errorf("failed to write response body: %w", err)
-		}
 	}
 
 	return nil
