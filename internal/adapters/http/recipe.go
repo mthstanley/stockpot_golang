@@ -386,9 +386,9 @@ func (h RecipeHandler) HandleGetRecipe(w http.ResponseWriter, r *http.Request) e
 		</head>
 		<body>
 			Ingredients:
-			<ul>
+			<ul class="wprm-recipe-ingredients">
 			{{ range .RecipeIngredients }}
-			<li itemprop="recipeIngredient">{{ . }}</li>
+			<li itemprop="recipeIngredient" class="wprm-recipe-ingredient">{{ . }}</li>
 			{{ end }}
 			</ul>
 		</body>
