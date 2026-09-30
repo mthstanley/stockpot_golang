@@ -1,9 +1,11 @@
 package http
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
 	"net/http"
 	"strconv"
 	"strings"
@@ -322,6 +324,11 @@ func NewRecipeSchema() *RecipeSchema {
 	}
 }
 
+type HTMLRecipeData struct {
+	JSONLD            template.JS
+	RecipeIngredients []string
+}
+
 type RecipeHandler struct {
 	recipeService recipe.Service
 }
@@ -369,18 +376,21 @@ func (h RecipeHandler) HandleGetRecipe(w http.ResponseWriter, r *http.Request) e
 
 	switch {
 	case strings.Contains(acceptHeader, "text/html"):
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.WriteHeader(http.StatusOK)
-
 		htmlTemplate := `
 		<!DOCTYPE html>
 		<html lang="en">
 		<head>
 			<meta charset="UTF-8">
 			<meta name="viewport" content="width=device-width, initial-scale=1.0">
-			<script type="application/ld+json">%s</script
+			<script type="application/ld+json">{{ .JSONLD }}</script>
 		</head>
 		<body>
+			Ingredients:
+			<ul>
+			{{ range .RecipeIngredients }}
+			<li itemprop="recipeIngredient">{{ . }}</li>
+			{{ end }}
+			</ul>
 		</body>
 		</html>
 		`
@@ -394,12 +404,30 @@ func (h RecipeHandler) HandleGetRecipe(w http.ResponseWriter, r *http.Request) e
 		schema.Name = rec.Title
 		schema.RecipeIngredient = ingredients
 
+		tmpl, err := template.New("recipe").Parse(htmlTemplate)
+		if err != nil {
+			return fmt.Errorf("failed to parse html template: %w", err)
+		}
+
 		data, err := json.Marshal(schema)
 		if err != nil {
 			return fmt.Errorf("failed to json encode recipe schema: %w", err)
 		}
 
-		fmt.Fprintf(w, htmlTemplate, data)
+		renderData := HTMLRecipeData{
+			JSONLD:            template.JS(data),
+			RecipeIngredients: schema.RecipeIngredient,
+		}
+
+		var result bytes.Buffer
+		err = tmpl.Execute(&result, renderData)
+		if err != nil {
+			return fmt.Errorf("failed to render recipe html: %w", err)
+		}
+
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, result.String())
 	default:
 		data, err := json.Marshal(convertToGetRecipe(*rec))
 		if err != nil {
