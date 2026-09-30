@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/mthstanley/stockpot/internal/core/recipe"
@@ -307,6 +308,20 @@ func (u UpdateRecipe) convertToRecipe(id int64, author user.User) recipe.Recipe 
 	}
 }
 
+type RecipeSchema struct {
+	Context          string   `json:"@context"`
+	Type             string   `json:"@type"`
+	Name             string   `json:"name"`
+	RecipeIngredient []string `json:"recipeIngredient"`
+}
+
+func NewRecipeSchema() *RecipeSchema {
+	return &RecipeSchema{
+		Context: "https://schema.org",
+		Type:    "Recipe",
+	}
+}
+
 type RecipeHandler struct {
 	recipeService recipe.Service
 }
@@ -350,15 +365,52 @@ func (h RecipeHandler) HandleGetRecipe(w http.ResponseWriter, r *http.Request) e
 		return fmt.Errorf("failed to get recipe: %w", err)
 	}
 
-	data, err := json.Marshal(convertToGetRecipe(*rec))
-	if err != nil {
-		return fmt.Errorf("failed to json encode response body: %w", err)
-	}
+	acceptHeader := r.Header.Get("Accept")
 
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write(data); err != nil {
-		return fmt.Errorf("failed to write response body: %w", err)
+	switch {
+	case strings.Contains(acceptHeader, "text/html"):
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+
+		htmlTemplate := `
+		<!DOCTYPE html>
+		<html lang="en">
+		<head>
+			<meta charset="UTF-8">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<script type="application/ld+json">%s</script
+		</head>
+		<body>
+		</body>
+		</html>
+		`
+
+		ingredients := []string{}
+		for _, i := range rec.Ingredients {
+			ingredients = append(ingredients, fmt.Sprintf("%d %s %s, %s", i.Quantity, i.Units.Name, i.Ingredient.Name, i.Preparation))
+		}
+
+		schema := NewRecipeSchema()
+		schema.Name = rec.Title
+		schema.RecipeIngredient = ingredients
+
+		data, err := json.Marshal(schema)
+		if err != nil {
+			return fmt.Errorf("failed to json encode recipe schema: %w", err)
+		}
+
+		fmt.Fprintf(w, htmlTemplate, data)
+	default:
+		data, err := json.Marshal(convertToGetRecipe(*rec))
+		if err != nil {
+			return fmt.Errorf("failed to json encode response body: %w", err)
+		}
+
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		if _, err := w.Write(data); err != nil {
+			return fmt.Errorf("failed to write response body: %w", err)
+		}
 	}
 
 	return nil
