@@ -7,7 +7,7 @@ CREATE TABLE unit (
 INSERT INTO
   unit (name)
 VALUES
-  ('grams');
+  ('unknown');
 
 CREATE TABLE recipe (
   id BIGSERIAL PRIMARY KEY,

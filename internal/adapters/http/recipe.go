@@ -19,14 +19,77 @@ type Units int
 
 const (
 	Grams Units = iota
+	Unknown
+	Teaspoons
+	Tablespoons
+	FluidOunces
+	Cups
+	Pints
+	Quarts
+	Gallons
+	Pounds
+	Ounces
+	Inches
+	Milliliters
+	Liters
+	Deciliters
+	Sprigs
+	Cloves
+	ToTaste
+	Whole
+	Small
+	Medium
+	Large
 )
 
 var unitsToString = map[Units]string{
-	Grams: "grams",
+	Grams:       "grams",
+	Unknown:     "unknown",
+	Teaspoons:   "teaspoons",
+	Tablespoons: "tablespoons",
+	FluidOunces: "fluid ounces",
+	Cups:        "cups",
+	Pints:       "pints",
+	Quarts:      "quarts",
+	Gallons:     "gallons",
+	Pounds:      "pounds",
+	Ounces:      "ounces",
+	Inches:      "inches",
+	Milliliters: "milliliters",
+	Liters:      "liters",
+	Deciliters:  "deciliters",
+	Sprigs:      "sprigs",
+	Cloves:      "cloves",
+	ToTaste:     "to taste",
+	Whole:       "whole",
+	Small:       "small",
+	Medium:      "medium",
+	Large:       "large",
 }
 
 var stringToUnits = map[string]Units{
-	"grams": Grams,
+	"grams":        Grams,
+	"unknown":      Unknown,
+	"teaspoons":    Teaspoons,
+	"tablespoons":  Tablespoons,
+	"fluid ounces": FluidOunces,
+	"cups":         Cups,
+	"pints":        Pints,
+	"quarts":       Quarts,
+	"gallons":      Gallons,
+	"pounds":       Pounds,
+	"ounces":       Ounces,
+	"inches":       Inches,
+	"milliliters":  Milliliters,
+	"liters":       Liters,
+	"deciliters":   Deciliters,
+	"sprigs":       Sprigs,
+	"cloves":       Cloves,
+	"to taste":     ToTaste,
+	"whole":        Whole,
+	"small":        Small,
+	"medium":       Medium,
+	"large":        Large,
 }
 
 func (u Units) String() string {
