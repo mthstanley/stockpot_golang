@@ -55,6 +55,7 @@ type Repository interface {
 	Create(ctx context.Context, rec Recipe) (*Recipe, error)
 	Update(ctx context.Context, rec Recipe) (*Recipe, error)
 	DeleteByID(ctx context.Context, id int64) (*Recipe, error)
+	GetUnits(ctx context.Context) ([]Unit, error)
 }
 
 type Service interface {
@@ -63,6 +64,7 @@ type Service interface {
 	Create(ctx context.Context, rec Recipe) (*Recipe, error)
 	Update(ctx context.Context, rec Recipe) (*Recipe, error)
 	DeleteByID(ctx context.Context, id int64) (*Recipe, error)
+	GetUnits(ctx context.Context) ([]Unit, error)
 }
 
 type DefaultService struct {
@@ -91,4 +93,8 @@ func (s DefaultService) Update(ctx context.Context, rec Recipe) (*Recipe, error)
 
 func (s DefaultService) DeleteByID(ctx context.Context, id int64) (*Recipe, error) {
 	return s.repo.DeleteByID(ctx, id)
+}
+
+func (s DefaultService) GetUnits(ctx context.Context) ([]Unit, error) {
+	return s.repo.GetUnits(ctx)
 }

@@ -26,6 +26,7 @@ func NewRouter(userService user.Service, authService auth.Service, recipeService
 	mux.Handle("POST /user/token", validateAuth(HandleErrors(userHandler.HandleGetToken)))
 
 	mux.Handle("GET /recipe", HandleErrors(recipeHandler.HandleGetRecipes))
+	mux.Handle("GET /recipe/unit", HandleErrors(recipeHandler.HandleGetUnits))
 	mux.Handle("POST /recipe", validateAuth(HandleErrors(recipeHandler.HandleCreateRecipe)))
 	mux.Handle("GET /recipe/{id}", HandleErrors(recipeHandler.HandleGetRecipe))
 	mux.Handle("POST /recipe/{id}", validateAuth(HandleErrors(recipeHandler.HandleUpdateRecipe)))
