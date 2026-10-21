@@ -25,7 +25,6 @@ VALUES
   ('large');
 
 -- +goose Down
--- TODO: finish this down migration
 UPDATE recipe AS r
 SET
   yield_units = (
