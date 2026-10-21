@@ -2,15 +2,17 @@ import { useFieldArray, useForm } from "react-hook-form";
 import {
   apiClient,
   GetRecipeResponse,
+  GetUnitResponse,
   MutateRecipeRequest,
 } from "../../utils/api";
 import { useNavigate } from "react-router";
 import { setEmptyOrStr, stripEmpty } from "../../utils/form";
+import { useEffect, useState } from "react";
 
 const RecipeForm = ({ recipe }: { recipe?: MutateRecipeRequest }) => {
   const navigate = useNavigate();
   const { register, control, handleSubmit } = useForm<MutateRecipeRequest>({
-    defaultValues: recipe,
+    defaultValues: recipe || { yieldUnits: "grams" },
   });
   const onSubmit = handleSubmit((recipe: MutateRecipeRequest) => {
     let response: Promise<GetRecipeResponse>;
@@ -36,6 +38,16 @@ const RecipeForm = ({ recipe }: { recipe?: MutateRecipeRequest }) => {
   const sortedStepFields = [...steps.fields].sort(
     (a, b) => a.ordinal - b.ordinal,
   );
+
+  const [units, setUnits] = useState<Set<GetUnitResponse>>(new Set());
+  useEffect(() => {
+    const fetchData = async () => {
+      await apiClient.getUnits().then((response) => {
+        setUnits(response);
+      });
+    };
+    fetchData();
+  }, []);
 
   return (
     <form onSubmit={onSubmit} className="recipe">
@@ -92,26 +104,31 @@ const RecipeForm = ({ recipe }: { recipe?: MutateRecipeRequest }) => {
               seconds
             </dd>
             <dt>Yields</dt>
-            <dd>
-              <input
-                id="yieldQuantity"
-                type="number"
-                {...register("yieldQuantity", {
-                  required: true,
-                  valueAsNumber: true,
-                })}
-              />
-              <select
-                id="yieldUnits"
-                defaultValue="grams"
-                {...register("yieldUnits", {
-                  required: true,
-                  setValueAs: setEmptyOrStr,
-                })}
-              >
-                <option value="grams">grams</option>
-              </select>
-            </dd>
+            {units.size > 0 && (
+              <dd>
+                <input
+                  id="yieldQuantity"
+                  type="number"
+                  {...register("yieldQuantity", {
+                    required: true,
+                    valueAsNumber: true,
+                  })}
+                />
+                <select
+                  id="yieldUnits"
+                  {...register("yieldUnits", {
+                    required: true,
+                    setValueAs: setEmptyOrStr,
+                  })}
+                >
+                  {[...units].map((unit, index) => (
+                    <option key={index} value={unit.name}>
+                      {unit.name}
+                    </option>
+                  ))}
+                </select>
+              </dd>
+            )}
           </dl>
         </div>
       </fieldset>
@@ -131,16 +148,21 @@ const RecipeForm = ({ recipe }: { recipe?: MutateRecipeRequest }) => {
                         valueAsNumber: true,
                       })}
                     />
-                    <select
-                      id={`ingredients.${index}.units`}
-                      defaultValue="grams"
-                      {...register(`ingredients.${index}.units`, {
-                        required: true,
-                        setValueAs: setEmptyOrStr,
-                      })}
-                    >
-                      <option value="grams">grams</option>
-                    </select>
+                    {units.size > 0 && (
+                      <select
+                        id={`ingredients.${index}.units`}
+                        {...register(`ingredients.${index}.units`, {
+                          required: true,
+                          setValueAs: setEmptyOrStr,
+                        })}
+                      >
+                        {[...units].map((unit, index) => (
+                          <option key={index} value={unit.name}>
+                            {unit.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                     <input
                       id={`ingredients.${index}.ingredient`}
                       placeholder="Ingredient"

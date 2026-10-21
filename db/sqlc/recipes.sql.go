@@ -333,6 +333,32 @@ func (q *Queries) GetRecipes(ctx context.Context) ([]GetRecipesRow, error) {
 	return items, nil
 }
 
+const getUnits = `-- name: GetUnits :many
+SELECT id, name
+FROM unit
+WHERE name != 'unknown'
+`
+
+func (q *Queries) GetUnits(ctx context.Context) ([]Unit, error) {
+	rows, err := q.db.Query(ctx, getUnits)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Unit
+	for rows.Next() {
+		var i Unit
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const insertIngredients = `-- name: InsertIngredients :many
 INSERT INTO ingredient (name) 
 SELECT i.name

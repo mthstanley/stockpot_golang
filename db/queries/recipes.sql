@@ -176,3 +176,8 @@ JOIN unit riu ON ri.units = riu.id;
 -- name: DeleteRecipe :exec
 DELETE FROM recipe
 WHERE id = $1;
+
+-- name: GetUnits :many
+SELECT *
+FROM unit
+WHERE name != 'unknown';

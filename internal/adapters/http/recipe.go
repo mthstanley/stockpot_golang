@@ -19,14 +19,77 @@ type Units int
 
 const (
 	Grams Units = iota
+	Unknown
+	Teaspoons
+	Tablespoons
+	FluidOunces
+	Cups
+	Pints
+	Quarts
+	Gallons
+	Pounds
+	Ounces
+	Inches
+	Milliliters
+	Liters
+	Deciliters
+	Sprigs
+	Cloves
+	ToTaste
+	Whole
+	Small
+	Medium
+	Large
 )
 
 var unitsToString = map[Units]string{
-	Grams: "grams",
+	Grams:       "grams",
+	Unknown:     "unknown",
+	Teaspoons:   "teaspoons",
+	Tablespoons: "tablespoons",
+	FluidOunces: "fluid ounces",
+	Cups:        "cups",
+	Pints:       "pints",
+	Quarts:      "quarts",
+	Gallons:     "gallons",
+	Pounds:      "pounds",
+	Ounces:      "ounces",
+	Inches:      "inches",
+	Milliliters: "milliliters",
+	Liters:      "liters",
+	Deciliters:  "deciliters",
+	Sprigs:      "sprigs",
+	Cloves:      "cloves",
+	ToTaste:     "to taste",
+	Whole:       "whole",
+	Small:       "small",
+	Medium:      "medium",
+	Large:       "large",
 }
 
 var stringToUnits = map[string]Units{
-	"grams": Grams,
+	"grams":        Grams,
+	"unknown":      Unknown,
+	"teaspoons":    Teaspoons,
+	"tablespoons":  Tablespoons,
+	"fluid ounces": FluidOunces,
+	"cups":         Cups,
+	"pints":        Pints,
+	"quarts":       Quarts,
+	"gallons":      Gallons,
+	"pounds":       Pounds,
+	"ounces":       Ounces,
+	"inches":       Inches,
+	"milliliters":  Milliliters,
+	"liters":       Liters,
+	"deciliters":   Deciliters,
+	"sprigs":       Sprigs,
+	"cloves":       Cloves,
+	"to taste":     ToTaste,
+	"whole":        Whole,
+	"small":        Small,
+	"medium":       Medium,
+	"large":        Large,
 }
 
 func (u Units) String() string {
@@ -340,6 +403,16 @@ func NewRecipeHandler(recipeService recipe.Service) *RecipeHandler {
 	return &RecipeHandler{recipeService}
 }
 
+type GetUnit struct {
+	Name string `json:"name"`
+}
+
+func convertToGetUnit(r recipe.Unit) GetUnit {
+	return GetUnit{
+		Name: r.Name,
+	}
+}
+
 func (h RecipeHandler) HandleGetRecipes(w http.ResponseWriter, r *http.Request) error {
 	recipes, err := h.recipeService.Get(r.Context())
 	if err != nil {
@@ -565,6 +638,30 @@ func (h RecipeHandler) HandleDeleteRecipe(w http.ResponseWriter, r *http.Request
 	}
 
 	data, err := json.Marshal(convertToGetRecipe(*deletedRecipe))
+	if err != nil {
+		return fmt.Errorf("failed to json encode response body: %w", err)
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(data); err != nil {
+		return fmt.Errorf("failed to write response body: %w", err)
+	}
+
+	return nil
+}
+
+func (h RecipeHandler) HandleGetUnits(w http.ResponseWriter, r *http.Request) error {
+	units, err := h.recipeService.GetUnits(r.Context())
+	if err != nil {
+		return fmt.Errorf("failed to get recipe units: %w", err)
+	}
+
+	getUnits := []GetUnit{}
+	for _, u := range units {
+		getUnits = append(getUnits, convertToGetUnit(u))
+	}
+	data, err := json.Marshal(getUnits)
 	if err != nil {
 		return fmt.Errorf("failed to json encode response body: %w", err)
 	}

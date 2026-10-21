@@ -354,3 +354,21 @@ func (r RecipeRepository) DeleteByID(ctx context.Context, id int64) (*recipe.Rec
 
 	return result, nil
 }
+
+func (r RecipeRepository) GetUnits(ctx context.Context) ([]recipe.Unit, error) {
+	queries := db.New(r.db)
+	units, err := queries.GetUnits(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get recipe units: %w", err)
+	}
+
+	var result []recipe.Unit
+	for _, u := range units {
+		result = append(result, recipe.Unit{
+			ID:   &u.ID,
+			Name: u.Name,
+		})
+	}
+
+	return result, nil
+}

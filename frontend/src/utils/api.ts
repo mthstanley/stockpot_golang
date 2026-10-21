@@ -78,6 +78,10 @@ export interface MutateRecipeRequest {
   steps: Array<MutateStepRequest>;
 }
 
+export interface GetUnitResponse {
+  name: string;
+}
+
 export interface BasicAuth {
   username: string;
   password: string;
@@ -207,6 +211,12 @@ class ApiClient {
     return this.client
       .post(`/recipe/${updateRecipeRequest.id!}`, updateRecipeRequest)
       .then((response) => response.data);
+  }
+
+  async getUnits(): Promise<Set<GetUnitResponse>> {
+    return this.client
+      .get<Set<GetUnitResponse>>("/recipe/unit")
+      .then((response) => new Set(response.data));
   }
 }
 
