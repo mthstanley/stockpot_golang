@@ -148,19 +148,21 @@ const RecipeForm = ({ recipe }: { recipe?: MutateRecipeRequest }) => {
                         valueAsNumber: true,
                       })}
                     />
-                    <select
-                      id={`ingredients.${index}.units`}
-                      {...register(`ingredients.${index}.units`, {
-                        required: true,
-                        setValueAs: setEmptyOrStr,
-                      })}
-                    >
-                      {[...units].map((unit, index) => (
-                        <option key={index} value={unit.name}>
-                          {unit.name}
-                        </option>
-                      ))}
-                    </select>
+                    {units.size > 0 && (
+                      <select
+                        id={`ingredients.${index}.units`}
+                        {...register(`ingredients.${index}.units`, {
+                          required: true,
+                          setValueAs: setEmptyOrStr,
+                        })}
+                      >
+                        {[...units].map((unit, index) => (
+                          <option key={index} value={unit.name}>
+                            {unit.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                     <input
                       id={`ingredients.${index}.ingredient`}
                       placeholder="Ingredient"
