@@ -45,6 +45,8 @@ type Recipe struct {
 	InactiveTime  *time.Duration
 	YieldQuantity int
 	YieldUnits    Unit
+	MinServings   *int
+	MaxServings   *int
 	Ingredients   []RecipeIngredient
 	Steps         []Step
 }

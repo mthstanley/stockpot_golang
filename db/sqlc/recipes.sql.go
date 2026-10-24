@@ -146,7 +146,9 @@ SELECT
     EXTRACT(EPOCH FROM r.cook_time)::bigint_nullable as cook_time,
     EXTRACT(EPOCH FROM r.inactive_time)::bigint_nullable as inactive_time,
     r.yield_quantity as yield_quantity,
-    ru.id, ru.name
+    ru.id, ru.name,
+    r.min_servings as min_servings,
+    r.max_servings as max_servings
 FROM
     recipe AS r
     JOIN app_user au ON r.author = au.id
@@ -164,6 +166,8 @@ type GetRecipeRow struct {
 	InactiveTime  pgtype.Numeric
 	YieldQuantity int32
 	Unit          Unit
+	MinServings   pgtype.Int4
+	MaxServings   pgtype.Int4
 }
 
 func (q *Queries) GetRecipe(ctx context.Context, id int64) (GetRecipeRow, error) {
@@ -181,6 +185,8 @@ func (q *Queries) GetRecipe(ctx context.Context, id int64) (GetRecipeRow, error)
 		&i.YieldQuantity,
 		&i.Unit.ID,
 		&i.Unit.Name,
+		&i.MinServings,
+		&i.MaxServings,
 	)
 	return i, err
 }
@@ -282,7 +288,9 @@ SELECT
     EXTRACT(EPOCH FROM r.cook_time)::bigint_nullable as cook_time,
     EXTRACT(EPOCH FROM r.inactive_time)::bigint_nullable as inactive_time,
     r.yield_quantity as yield_quantity,
-    ru.id, ru.name
+    ru.id, ru.name,
+    r.min_servings as min_servings,
+    r.max_servings as max_servings
 FROM
     recipe AS r
     JOIN app_user au ON r.author = au.id
@@ -299,6 +307,8 @@ type GetRecipesRow struct {
 	InactiveTime  pgtype.Numeric
 	YieldQuantity int32
 	Unit          Unit
+	MinServings   pgtype.Int4
+	MaxServings   pgtype.Int4
 }
 
 func (q *Queries) GetRecipes(ctx context.Context) ([]GetRecipesRow, error) {
@@ -322,6 +332,8 @@ func (q *Queries) GetRecipes(ctx context.Context) ([]GetRecipesRow, error) {
 			&i.YieldQuantity,
 			&i.Unit.ID,
 			&i.Unit.Name,
+			&i.MinServings,
+			&i.MaxServings,
 		); err != nil {
 			return nil, err
 		}
@@ -397,9 +409,11 @@ INSERT INTO recipe (
     cook_time,
     inactive_time,
     yield_quantity,
-    yield_units
-) VALUES ($1, $2, $3, $4, $5, $6, $7, (SELECT id FROM unit WHERE name = $8))
-RETURNING id, title, description, author, prep_time, cook_time, inactive_time, yield_quantity, yield_units
+    yield_units,
+    min_servings,
+    max_servings
+) VALUES ($1, $2, $3, $4, $5, $6, $7, (SELECT id FROM unit WHERE name = $10), $8, $9)
+RETURNING id, title, description, author, prep_time, cook_time, inactive_time, yield_quantity, yield_units, min_servings, max_servings
 `
 
 type InsertRecipeParams struct {
@@ -410,6 +424,8 @@ type InsertRecipeParams struct {
 	CookTime       pgtype.Interval
 	InactiveTime   pgtype.Interval
 	YieldQuantity  int32
+	MinServings    pgtype.Int4
+	MaxServings    pgtype.Int4
 	YieldUnitsName string
 }
 
@@ -422,6 +438,8 @@ func (q *Queries) InsertRecipe(ctx context.Context, arg InsertRecipeParams) (Rec
 		arg.CookTime,
 		arg.InactiveTime,
 		arg.YieldQuantity,
+		arg.MinServings,
+		arg.MaxServings,
 		arg.YieldUnitsName,
 	)
 	var i Recipe
@@ -435,6 +453,8 @@ func (q *Queries) InsertRecipe(ctx context.Context, arg InsertRecipeParams) (Rec
 		&i.InactiveTime,
 		&i.YieldQuantity,
 		&i.YieldUnits,
+		&i.MinServings,
+		&i.MaxServings,
 	)
 	return i, err
 }
@@ -541,8 +561,10 @@ INSERT INTO recipe (
     cook_time,
     inactive_time,
     yield_quantity,
-    yield_units
-) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, (SELECT id FROM unit WHERE name = $9))
+    yield_units,
+    min_servings,
+    max_servings
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, (SELECT id FROM unit WHERE name = $11), $9, $10)
 ON CONFLICT (id) DO UPDATE SET
     title = EXCLUDED.title,
     description = EXCLUDED.description,
@@ -551,8 +573,10 @@ ON CONFLICT (id) DO UPDATE SET
     cook_time = EXCLUDED.cook_time,
     inactive_time = EXCLUDED.inactive_time,
     yield_quantity = EXCLUDED.yield_quantity,
-    yield_units = EXCLUDED.yield_units
-RETURNING id, title, description, author, prep_time, cook_time, inactive_time, yield_quantity, yield_units
+    yield_units = EXCLUDED.yield_units,
+    min_servings = EXCLUDED.min_servings,
+    max_servings = EXCLUDED.max_servings
+RETURNING id, title, description, author, prep_time, cook_time, inactive_time, yield_quantity, yield_units, min_servings, max_servings
 `
 
 type UpsertRecipeParams struct {
@@ -564,6 +588,8 @@ type UpsertRecipeParams struct {
 	CookTime       pgtype.Interval
 	InactiveTime   pgtype.Interval
 	YieldQuantity  int32
+	MinServings    pgtype.Int4
+	MaxServings    pgtype.Int4
 	YieldUnitsName string
 }
 
@@ -577,6 +603,8 @@ func (q *Queries) UpsertRecipe(ctx context.Context, arg UpsertRecipeParams) (Rec
 		arg.CookTime,
 		arg.InactiveTime,
 		arg.YieldQuantity,
+		arg.MinServings,
+		arg.MaxServings,
 		arg.YieldUnitsName,
 	)
 	var i Recipe
@@ -590,6 +618,8 @@ func (q *Queries) UpsertRecipe(ctx context.Context, arg UpsertRecipeParams) (Rec
 		&i.InactiveTime,
 		&i.YieldQuantity,
 		&i.YieldUnits,
+		&i.MinServings,
+		&i.MaxServings,
 	)
 	return i, err
 }

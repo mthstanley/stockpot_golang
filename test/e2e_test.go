@@ -355,6 +355,8 @@ func TestCreateRecipe(t *testing.T) {
 			"inactive_time": 8600,
 			"yield_quantity": 200,
 			"yield_units": "grams",
+			"min_servings": 4,
+			"max_servings": 6,
 			"ingredients": [
 				{
 					"ingredient": "carrots",
@@ -400,6 +402,8 @@ func TestCreateRecipe(t *testing.T) {
         "inactive_time": 8600,
         "yield_quantity": 200,
         "yield_units": "grams",
+        "min_servings": 4,
+        "max_servings": 6,
         "ingredients": [
             {
                 "id": 1,
@@ -484,6 +488,8 @@ func TestUpdateRecipeAddNewIngredient(t *testing.T) {
 			"inactive_time": 8600,
 			"yield_quantity": 200,
 			"yield_units": "grams",
+			"min_servings": 4,
+			"max_servings": 6,
 			"ingredients": [
 				{
 					"ingredient": "carrots",
@@ -520,6 +526,8 @@ func TestUpdateRecipeAddNewIngredient(t *testing.T) {
 			"inactive_time": 8600,
 			"yield_quantity": 200,
 			"yield_units": "grams",
+			"min_servings": 4,
+			"max_servings": 6,
 			"ingredients": [
 				{
 					"id": 1,
@@ -567,6 +575,8 @@ func TestUpdateRecipeAddNewIngredient(t *testing.T) {
         "inactive_time": 8600,
         "yield_quantity": 200,
         "yield_units": "grams",
+        "min_servings": 4,
+        "max_servings": 6,
         "ingredients": [
             {
                 "id": 1,
@@ -651,6 +661,8 @@ func TestUpdateRecipeAddNewStep(t *testing.T) {
 			"inactive_time": 8600,
 			"yield_quantity": 200,
 			"yield_units": "grams",
+			"min_servings": 4,
+			"max_servings": 6,
 			"ingredients": [
 				{
 					"ingredient": "carrots",
@@ -687,6 +699,8 @@ func TestUpdateRecipeAddNewStep(t *testing.T) {
 			"inactive_time": 8600,
 			"yield_quantity": 200,
 			"yield_units": "grams",
+			"min_servings": 4,
+			"max_servings": 6,
 			"ingredients": [
 				{
 					"id": 1,
@@ -732,6 +746,8 @@ func TestUpdateRecipeAddNewStep(t *testing.T) {
         "inactive_time": 8600,
         "yield_quantity": 200,
         "yield_units": "grams",
+        "min_servings": 4,
+        "max_servings": 6,
         "ingredients": [
             {
                 "id": 1,
@@ -814,6 +830,8 @@ func TestUpdateRecipeChangeExistingFields(t *testing.T) {
 			"inactive_time": 8600,
 			"yield_quantity": 200,
 			"yield_units": "grams",
+			"min_servings": 4,
+			"max_servings": 6,
 			"ingredients": [
 				{
 					"ingredient": "carrots",
@@ -851,6 +869,8 @@ func TestUpdateRecipeChangeExistingFields(t *testing.T) {
 			"inactive_time": 200,
 			"yield_quantity": 100,
 			"yield_units": "grams",
+			"min_servings": 2,
+			"max_servings": 3,
 			"ingredients": [
 				{
 					"id": 1,
@@ -892,6 +912,8 @@ func TestUpdateRecipeChangeExistingFields(t *testing.T) {
         "inactive_time": 200,
         "yield_quantity": 100,
         "yield_units": "grams",
+        "min_servings": 2,
+        "max_servings": 3,
         "ingredients": [
             {
                 "id": 1,
@@ -969,6 +991,8 @@ func TestUpdateRecipeRemoveIngredientStep(t *testing.T) {
 			"inactive_time": 8600,
 			"yield_quantity": 200,
 			"yield_units": "grams",
+			"min_servings": 4,
+			"max_servings": 6,
 			"ingredients": [
 				{
 					"ingredient": "carrots",
@@ -1016,6 +1040,8 @@ func TestUpdateRecipeRemoveIngredientStep(t *testing.T) {
 			"inactive_time": 8600,
 			"yield_quantity": 200,
 			"yield_units": "grams",
+			"min_servings": 4,
+			"max_servings": 6,
 			"ingredients": [
 				{
 					"id": 1,
@@ -1057,6 +1083,8 @@ func TestUpdateRecipeRemoveIngredientStep(t *testing.T) {
         "inactive_time": 8600,
         "yield_quantity": 200,
         "yield_units": "grams",
+        "min_servings": 4,
+        "max_servings": 6,
         "ingredients": [
             {
                 "id": 1,
@@ -1134,6 +1162,8 @@ func TestDeleteRecipe(t *testing.T) {
 			"inactive_time": 8600,
 			"yield_quantity": 200,
 			"yield_units": "grams",
+			"min_servings": null,
+			"max_servings": null,
 			"ingredients": [
 				{
 					"ingredient": "carrots",
@@ -1179,6 +1209,8 @@ func TestDeleteRecipe(t *testing.T) {
         "inactive_time": 8600,
         "yield_quantity": 200,
         "yield_units": "grams",
+        "min_servings": null,
+        "max_servings": null,
         "ingredients": [
             {
                 "id": 1,

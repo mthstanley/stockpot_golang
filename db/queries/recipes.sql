@@ -15,8 +15,10 @@ INSERT INTO recipe (
     cook_time,
     inactive_time,
     yield_quantity,
-    yield_units
-) VALUES ($1, $2, $3, $4, $5, $6, $7, (SELECT id FROM unit WHERE name = @yield_units_name))
+    yield_units,
+    min_servings,
+    max_servings
+) VALUES ($1, $2, $3, $4, $5, $6, $7, (SELECT id FROM unit WHERE name = @yield_units_name), $8, $9)
 RETURNING *;
 
 -- name: InsertSteps :many
@@ -47,8 +49,10 @@ INSERT INTO recipe (
     cook_time,
     inactive_time,
     yield_quantity,
-    yield_units
-) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, (SELECT id FROM unit WHERE name = @yield_units_name))
+    yield_units,
+    min_servings,
+    max_servings
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, (SELECT id FROM unit WHERE name = @yield_units_name), $9, $10)
 ON CONFLICT (id) DO UPDATE SET
     title = EXCLUDED.title,
     description = EXCLUDED.description,
@@ -57,7 +61,9 @@ ON CONFLICT (id) DO UPDATE SET
     cook_time = EXCLUDED.cook_time,
     inactive_time = EXCLUDED.inactive_time,
     yield_quantity = EXCLUDED.yield_quantity,
-    yield_units = EXCLUDED.yield_units
+    yield_units = EXCLUDED.yield_units,
+    min_servings = EXCLUDED.min_servings,
+    max_servings = EXCLUDED.max_servings
 RETURNING *;
 
 -- name: UpsertSteps :many
@@ -108,7 +114,9 @@ SELECT
     EXTRACT(EPOCH FROM r.cook_time)::bigint_nullable as cook_time,
     EXTRACT(EPOCH FROM r.inactive_time)::bigint_nullable as inactive_time,
     r.yield_quantity as yield_quantity,
-    sqlc.embed(ru)
+    sqlc.embed(ru),
+    r.min_servings as min_servings,
+    r.max_servings as max_servings
 FROM
     recipe AS r
     JOIN app_user au ON r.author = au.id
@@ -147,7 +155,9 @@ SELECT
     EXTRACT(EPOCH FROM r.cook_time)::bigint_nullable as cook_time,
     EXTRACT(EPOCH FROM r.inactive_time)::bigint_nullable as inactive_time,
     r.yield_quantity as yield_quantity,
-    sqlc.embed(ru)
+    sqlc.embed(ru),
+    r.min_servings as min_servings,
+    r.max_servings as max_servings
 FROM
     recipe AS r
     JOIN app_user au ON r.author = au.id

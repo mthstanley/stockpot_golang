@@ -21,6 +21,21 @@ func convertToText(t *string) pgtype.Text {
 	return pgtype.Text{String: *t, Valid: true}
 }
 
+func convertInt4(i pgtype.Int4) *int {
+	if !i.Valid {
+		return nil
+	}
+	v := int(i.Int32)
+	return &v
+}
+
+func convertToInt4(i *int) pgtype.Int4 {
+	if i == nil {
+		return pgtype.Int4{Valid: false}
+	}
+	return pgtype.Int4{Int32: int32(*i), Valid: true}
+}
+
 func convertEpochSeconds(t pgtype.Numeric) *time.Duration {
 	if !t.Valid {
 		return nil

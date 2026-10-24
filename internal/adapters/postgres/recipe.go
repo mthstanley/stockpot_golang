@@ -46,6 +46,8 @@ func (r RecipeRepository) Get(ctx context.Context) ([]recipe.Recipe, error) {
 			InactiveTime:  convertEpochSeconds(r.InactiveTime),
 			YieldQuantity: int(r.YieldQuantity),
 			YieldUnits:    recipe.Unit{ID: &r.Unit.ID, Name: r.Unit.Name},
+			MinServings:   convertInt4(r.MinServings),
+			MaxServings:   convertInt4(r.MaxServings),
 			Ingredients:   []recipe.RecipeIngredient{},
 			Steps:         []recipe.Step{},
 		}
@@ -118,6 +120,8 @@ func (r RecipeRepository) GetByID(ctx context.Context, id int64) (*recipe.Recipe
 		InactiveTime:  convertEpochSeconds(dbRecipe.InactiveTime),
 		YieldQuantity: int(dbRecipe.YieldQuantity),
 		YieldUnits:    recipe.Unit{ID: &dbRecipe.Unit.ID, Name: dbRecipe.Unit.Name},
+		MinServings:   convertInt4(dbRecipe.MinServings),
+		MaxServings:   convertInt4(dbRecipe.MaxServings),
 		Ingredients:   []recipe.RecipeIngredient{},
 		Steps:         []recipe.Step{},
 	}
@@ -186,6 +190,8 @@ func (r RecipeRepository) Create(ctx context.Context, rec recipe.Recipe) (*recip
 		InactiveTime:   convertToInterval(rec.InactiveTime),
 		YieldQuantity:  int32(rec.YieldQuantity),
 		YieldUnitsName: rec.YieldUnits.Name,
+		MinServings:    convertToInt4(rec.MinServings),
+		MaxServings:    convertToInt4(rec.MaxServings),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert recipe: %w", err)
@@ -249,6 +255,8 @@ func (r RecipeRepository) Update(ctx context.Context, rec recipe.Recipe) (*recip
 		InactiveTime:   convertToInterval(rec.InactiveTime),
 		YieldQuantity:  int32(rec.YieldQuantity),
 		YieldUnitsName: rec.YieldUnits.Name,
+		MinServings:    convertToInt4(rec.MinServings),
+		MaxServings:    convertToInt4(rec.MaxServings),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert recipe: %w", err)
