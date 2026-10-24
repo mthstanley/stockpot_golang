@@ -19,6 +19,12 @@ var (
 	rootCMD = &cobra.Command{
 		Use:   "stockpot",
 		Short: "Used to run various aspects of the stockpot application",
+		// Only bind the flags of the command being executed. Subcommands share
+		// flag names (e.g. db-host), so binding every subcommand's flags would
+		// let whichever was bound last shadow the flags actually passed in.
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			viper.BindPFlags(cmd.Flags())
+		},
 	}
 )
 
@@ -39,21 +45,13 @@ func init() {
 	rootCMD.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.stockpot.yaml)")
 	rootCMD.AddCommand(serverCMD)
 	rootCMD.AddCommand(migrateCMD)
+	rootCMD.AddCommand(userCMD)
 	cobra.OnInitialize(initConfig)
 }
 
 func er(msg any) {
 	fmt.Println("Error:", msg)
 	os.Exit(1)
-}
-
-func bindAllCommandFlags(cmd *cobra.Command) {
-	viper.BindPFlags(cmd.Flags())
-	viper.BindPFlags(cmd.PersistentFlags())
-
-	for _, subCMD := range cmd.Commands() {
-		bindAllCommandFlags(subCMD)
-	}
 }
 
 func initConfig() {
@@ -75,7 +73,6 @@ func initConfig() {
 	viper.SetEnvPrefix("STOCKPOT")
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_", ".", "_"))
 	viper.AutomaticEnv()
-	bindAllCommandFlags(rootCMD)
 
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
