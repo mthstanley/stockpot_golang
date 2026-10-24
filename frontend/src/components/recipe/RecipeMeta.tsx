@@ -1,5 +1,12 @@
 import { GetRecipeResponse } from "../../utils/api";
 
+const formatServings = (min?: number, max?: number) => {
+  if (min == null || max == null || min === max) {
+    return `${min ?? max}`;
+  }
+  return `${min}–${max}`;
+};
+
 const RecipeMeta = ({ recipe }: { recipe: GetRecipeResponse }) => {
   return (
     <dl>
@@ -27,6 +34,12 @@ const RecipeMeta = ({ recipe }: { recipe: GetRecipeResponse }) => {
       <dd>
         {recipe.yieldQuantity} {recipe.yieldUnits}
       </dd>
+      {(recipe.minServings != null || recipe.maxServings != null) && (
+        <>
+          <dt>Servings</dt>
+          <dd>{formatServings(recipe.minServings, recipe.maxServings)}</dd>
+        </>
+      )}
     </dl>
   );
 };

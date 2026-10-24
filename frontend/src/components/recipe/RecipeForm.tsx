@@ -129,6 +129,33 @@ const RecipeForm = ({ recipe }: { recipe?: MutateRecipeRequest }) => {
                 </select>
               </dd>
             )}
+            <dt>
+              <label htmlFor="minServings">Servings</label>
+            </dt>
+            <dd>
+              <input
+                id="minServings"
+                type="number"
+                placeholder="Min"
+                {...register("minServings", { valueAsNumber: true, min: 1 })}
+              />{" "}
+              to{" "}
+              <input
+                id="maxServings"
+                type="number"
+                placeholder="Max"
+                {...register("maxServings", {
+                  valueAsNumber: true,
+                  min: 1,
+                  validate: (max, { minServings }) =>
+                    Number.isNaN(max) ||
+                    Number.isNaN(minServings) ||
+                    minServings == null ||
+                    max == null ||
+                    max >= minServings,
+                })}
+              />
+            </dd>
           </dl>
         </div>
       </fieldset>

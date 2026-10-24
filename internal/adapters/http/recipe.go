@@ -203,6 +203,8 @@ type GetRecipe struct {
 	InactiveTime  *JSONSeconds          `json:"inactive_time"`
 	YieldQuantity int                   `json:"yield_quantity"`
 	YieldUnits    string                `json:"yield_units"`
+	MinServings   *int                  `json:"min_servings"`
+	MaxServings   *int                  `json:"max_servings"`
 	Ingredients   []GetRecipeIngredient `json:"ingredients"`
 	Steps         []GetStep             `json:"steps"`
 }
@@ -230,6 +232,8 @@ func convertToGetRecipe(r recipe.Recipe) GetRecipe {
 		InactiveTime:  toJSONSeconds(r.InactiveTime),
 		YieldQuantity: r.YieldQuantity,
 		YieldUnits:    r.YieldUnits.Name,
+		MinServings:   r.MinServings,
+		MaxServings:   r.MaxServings,
 		Ingredients:   i,
 		Steps:         s,
 	}
@@ -275,6 +279,8 @@ type CreateRecipe struct {
 	InactiveTime  *JSONSeconds             `json:"inactive_time"`
 	YieldQuantity int                      `json:"yield_quantity"`
 	YieldUnits    Units                    `json:"yield_units"`
+	MinServings   *int                     `json:"min_servings"`
+	MaxServings   *int                     `json:"max_servings"`
 	Ingredients   []CreateRecipeIngredient `json:"ingredients"`
 	Steps         []CreateStep             `json:"steps"`
 }
@@ -298,6 +304,8 @@ func (c CreateRecipe) convertToRecipe(u user.User) recipe.Recipe {
 		InactiveTime:  c.InactiveTime.Duration(),
 		YieldQuantity: c.YieldQuantity,
 		YieldUnits:    recipe.Unit{ID: nil, Name: c.YieldUnits.String()},
+		MinServings:   c.MinServings,
+		MaxServings:   c.MaxServings,
 		Ingredients:   i,
 		Steps:         s,
 	}
@@ -345,6 +353,8 @@ type UpdateRecipe struct {
 	InactiveTime  *JSONSeconds             `json:"inactive_time"`
 	YieldQuantity int                      `json:"yield_quantity"`
 	YieldUnits    Units                    `json:"yield_units"`
+	MinServings   *int                     `json:"min_servings"`
+	MaxServings   *int                     `json:"max_servings"`
 	Ingredients   []UpdateRecipeIngredient `json:"ingredients"`
 	Steps         []UpdateStep             `json:"steps"`
 }
@@ -368,6 +378,8 @@ func (u UpdateRecipe) convertToRecipe(id int64, author user.User) recipe.Recipe 
 		InactiveTime:  u.InactiveTime.Duration(),
 		YieldQuantity: u.YieldQuantity,
 		YieldUnits:    recipe.Unit{ID: nil, Name: u.YieldUnits.String()},
+		MinServings:   u.MinServings,
+		MaxServings:   u.MaxServings,
 		Ingredients:   i,
 		Steps:         s,
 	}

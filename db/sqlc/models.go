@@ -35,6 +35,8 @@ type Recipe struct {
 	InactiveTime  pgtype.Interval
 	YieldQuantity int32
 	YieldUnits    int64
+	MinServings   pgtype.Int4
+	MaxServings   pgtype.Int4
 }
 
 type RecipeIngredient struct {

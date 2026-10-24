@@ -47,6 +47,8 @@ export interface GetRecipeResponse {
   inactiveTime?: number;
   yieldQuantity: number;
   yieldUnits: string;
+  minServings?: number;
+  maxServings?: number;
   ingredients: Array<GetRecipeIngredientResponse>;
   steps: Array<GetStepResponse>;
 }
@@ -74,6 +76,8 @@ export interface MutateRecipeRequest {
   inactiveTime?: number;
   yieldQuantity: number;
   yieldUnits: string;
+  minServings?: number;
+  maxServings?: number;
   ingredients: Array<MutateRecipeIngredientRequest>;
   steps: Array<MutateStepRequest>;
 }
