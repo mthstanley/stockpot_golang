@@ -60,6 +60,12 @@ func setupDB(ctx context.Context, t *testing.T) *pgxpool.Pool {
 		t.Fatalf("failed to migrate database: %v", err)
 	}
 
+	// collect table statistics so the query planner behaves as it would against
+	// a long-lived database, rather than masking order-dependent queries
+	if _, err := pool.Exec(ctx, "ANALYZE"); err != nil {
+		t.Fatalf("failed to analyze db: %v", err)
+	}
+
 	t.Cleanup(func() {
 		if err := goose.DownTo(db, "db/migrations", 0); err != nil {
 			t.Errorf("failed to tear down migrations: %v", err)
@@ -1317,6 +1323,471 @@ func TestDeleteRecipe(t *testing.T) {
 	}
 
 	expectedCode = 404
+	if res.StatusCode != expectedCode {
+		t.Errorf("expected status code %d, got %d", expectedCode, res.StatusCode)
+	}
+}
+
+// Ingredient and unit names are looked up by joining against their tables, and
+// once those tables have statistics (see setupDB) postgres prefers a hash join
+// that returns rows in table order rather than input order. These names are
+// deliberately ordered opposite to their table ids (butter/carrots already
+// exist as 2/1, grams/cups are 12/5) so a lookup that doesn't preserve input
+// order will mismatch them with their quantities.
+func TestCreateRecipePreservesIngredientOrder(t *testing.T) {
+	ctx := context.Background()
+	server := setupHTTPServer(ctx, t, serverConfig{disableUserSignup: false})
+
+	_, err := server.Client().Post(server.URL+"/user", "application/json", strings.NewReader(`{"username": "test", "password": "secret", "name": "joe"}`))
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	req, err := http.NewRequest(
+		"POST",
+		server.URL+"/recipe",
+		strings.NewReader(`{
+			"title": "Buttered Carrots",
+			"yield_quantity": 200,
+			"yield_units": "grams",
+			"ingredients": [
+				{
+					"ingredient": "carrots",
+					"quantity": 200,
+					"units": "grams",
+					"preparation": "diced"
+				},
+				{
+					"ingredient": "butter",
+					"quantity": 200,
+					"units": "grams",
+					"preparation": "melted"
+				}
+			],
+			"steps": [
+				{
+					"ordinal": 1,
+					"instruction": "Mix it all together"
+				}
+			]
+		}`),
+	)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	req.SetBasicAuth("test", "secret")
+	_, err = server.Client().Do(req)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	req, err = http.NewRequest(
+		"POST",
+		server.URL+"/recipe",
+		strings.NewReader(`{
+			"title": "Carrot Butter",
+			"yield_quantity": 200,
+			"yield_units": "grams",
+			"ingredients": [
+				{
+					"ingredient": "butter",
+					"quantity": 100,
+					"units": "grams",
+					"preparation": "softened"
+				},
+				{
+					"ingredient": "carrots",
+					"quantity": 2,
+					"units": "cups",
+					"preparation": "grated"
+				}
+			],
+			"steps": [
+				{
+					"ordinal": 1,
+					"instruction": "Mix it all together"
+				}
+			]
+		}`),
+	)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	req.SetBasicAuth("test", "secret")
+	res, err := server.Client().Do(req)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	defer res.Body.Close()
+	actual, _ := io.ReadAll(res.Body)
+	expected := `{
+		"id": 2,
+        "author": {
+            "id": 1,
+            "name": "joe"
+        },
+        "title": "Carrot Butter",
+        "description": null,
+        "prep_time": null,
+        "cook_time": null,
+        "inactive_time": null,
+        "yield_quantity": 200,
+        "yield_units": "grams",
+        "min_servings": null,
+        "max_servings": null,
+        "ingredients": [
+            {
+                "id": 3,
+                "ingredient": "butter",
+                "quantity": 100,
+                "units": "grams",
+                "preparation": "softened"
+            },
+            {
+                "id": 4,
+                "ingredient": "carrots",
+                "quantity": 2,
+                "units": "cups",
+                "preparation": "grated"
+            }
+        ],
+        "steps": [
+            {
+                "id": 2,
+                "ordinal": 1,
+                "instruction": "Mix it all together"
+            }
+        ]
+	}`
+
+	diff, err := jsonEq(expected, string(actual))
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if diff != "" {
+		t.Errorf("created recipe doesn't match expected %s", diff)
+	}
+
+	expectedCode := 201
+	if res.StatusCode != expectedCode {
+		t.Errorf("expected status code %d, got %d", expectedCode, res.StatusCode)
+	}
+}
+
+func TestUpdateRecipePreservesIngredientOrder(t *testing.T) {
+	ctx := context.Background()
+	server := setupHTTPServer(ctx, t, serverConfig{disableUserSignup: false})
+
+	_, err := server.Client().Post(server.URL+"/user", "application/json", strings.NewReader(`{"username": "test", "password": "secret", "name": "joe"}`))
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	req, err := http.NewRequest(
+		"POST",
+		server.URL+"/recipe",
+		strings.NewReader(`{
+			"title": "Buttered Carrots",
+			"yield_quantity": 200,
+			"yield_units": "grams",
+			"ingredients": [
+				{
+					"ingredient": "carrots",
+					"quantity": 200,
+					"units": "grams",
+					"preparation": "diced"
+				},
+				{
+					"ingredient": "butter",
+					"quantity": 200,
+					"units": "grams",
+					"preparation": "melted"
+				}
+			],
+			"steps": [
+				{
+					"ordinal": 1,
+					"instruction": "Mix it all together"
+				}
+			]
+		}`),
+	)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	req.SetBasicAuth("test", "secret")
+	_, err = server.Client().Do(req)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	req, err = http.NewRequest(
+		"POST",
+		server.URL+"/recipe/1",
+		strings.NewReader(`{
+			"id": 1,
+			"title": "Buttered Carrots",
+			"yield_quantity": 200,
+			"yield_units": "grams",
+			"ingredients": [
+				{
+					"id": 1,
+					"ingredient": "butter",
+					"quantity": 100,
+					"units": "grams",
+					"preparation": "softened"
+				},
+				{
+					"id": 2,
+					"ingredient": "carrots",
+					"quantity": 2,
+					"units": "cups",
+					"preparation": "grated"
+				}
+			],
+			"steps": [
+				{
+					"id": 1,
+					"ordinal": 1,
+					"instruction": "Mix it all together"
+				}
+			]
+		}`),
+	)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	req.SetBasicAuth("test", "secret")
+	res, err := server.Client().Do(req)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	defer res.Body.Close()
+	actual, _ := io.ReadAll(res.Body)
+	expected := `{
+		"id": 1,
+        "author": {
+            "id": 1,
+            "name": "joe"
+        },
+        "title": "Buttered Carrots",
+        "description": null,
+        "prep_time": null,
+        "cook_time": null,
+        "inactive_time": null,
+        "yield_quantity": 200,
+        "yield_units": "grams",
+        "min_servings": null,
+        "max_servings": null,
+        "ingredients": [
+            {
+                "id": 1,
+                "ingredient": "butter",
+                "quantity": 100,
+                "units": "grams",
+                "preparation": "softened"
+            },
+            {
+                "id": 2,
+                "ingredient": "carrots",
+                "quantity": 2,
+                "units": "cups",
+                "preparation": "grated"
+            }
+        ],
+        "steps": [
+            {
+                "id": 1,
+                "ordinal": 1,
+                "instruction": "Mix it all together"
+            }
+        ]
+	}`
+
+	diff, err := jsonEq(expected, string(actual))
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if diff != "" {
+		t.Errorf("updated recipe doesn't match expected %s", diff)
+	}
+
+	expectedCode := 200
+	if res.StatusCode != expectedCode {
+		t.Errorf("expected status code %d, got %d", expectedCode, res.StatusCode)
+	}
+}
+
+func TestGetRecipes(t *testing.T) {
+	ctx := context.Background()
+	server := setupHTTPServer(ctx, t, serverConfig{disableUserSignup: false})
+
+	_, err := server.Client().Post(server.URL+"/user", "application/json", strings.NewReader(`{"username": "test", "password": "secret", "name": "joe"}`))
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	for _, body := range []string{
+		`{
+			"title": "Buttered Carrots",
+			"yield_quantity": 200,
+			"yield_units": "grams",
+			"ingredients": [
+				{
+					"ingredient": "carrots",
+					"quantity": 200,
+					"units": "grams",
+					"preparation": "diced"
+				},
+				{
+					"ingredient": "butter",
+					"quantity": 200,
+					"units": "grams",
+					"preparation": "melted"
+				}
+			],
+			"steps": [
+				{
+					"ordinal": 1,
+					"instruction": "Saute the carrots in the butter"
+				}
+			]
+		}`,
+		`{
+			"title": "Boiled Potatoes",
+			"yield_quantity": 100,
+			"yield_units": "grams",
+			"ingredients": [
+				{
+					"ingredient": "potatoes",
+					"quantity": 100,
+					"units": "grams",
+					"preparation": "sliced"
+				}
+			],
+			"steps": [
+				{
+					"ordinal": 1,
+					"instruction": "Boil the potatoes"
+				},
+				{
+					"ordinal": 2,
+					"instruction": "Eat the potatoes"
+				}
+			]
+		}`,
+	} {
+		req, err := http.NewRequest("POST", server.URL+"/recipe", strings.NewReader(body))
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		req.SetBasicAuth("test", "secret")
+		_, err = server.Client().Do(req)
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+	}
+
+	req, err := http.NewRequest("GET", server.URL+"/recipe", nil)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	res, err := server.Client().Do(req)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	defer res.Body.Close()
+
+	actual, _ := io.ReadAll(res.Body)
+	expected := `[
+		{
+			"id": 1,
+			"author": {
+				"id": 1,
+				"name": "joe"
+			},
+			"title": "Buttered Carrots",
+			"description": null,
+			"prep_time": null,
+			"cook_time": null,
+			"inactive_time": null,
+			"yield_quantity": 200,
+			"yield_units": "grams",
+			"min_servings": null,
+			"max_servings": null,
+			"ingredients": [
+				{
+					"id": 1,
+					"ingredient": "carrots",
+					"quantity": 200,
+					"units": "grams",
+					"preparation": "diced"
+				},
+				{
+					"id": 2,
+					"ingredient": "butter",
+					"quantity": 200,
+					"units": "grams",
+					"preparation": "melted"
+				}
+			],
+			"steps": [
+				{
+					"id": 1,
+					"ordinal": 1,
+					"instruction": "Saute the carrots in the butter"
+				}
+			]
+		},
+		{
+			"id": 2,
+			"author": {
+				"id": 1,
+				"name": "joe"
+			},
+			"title": "Boiled Potatoes",
+			"description": null,
+			"prep_time": null,
+			"cook_time": null,
+			"inactive_time": null,
+			"yield_quantity": 100,
+			"yield_units": "grams",
+			"min_servings": null,
+			"max_servings": null,
+			"ingredients": [
+				{
+					"id": 3,
+					"ingredient": "potatoes",
+					"quantity": 100,
+					"units": "grams",
+					"preparation": "sliced"
+				}
+			],
+			"steps": [
+				{
+					"id": 2,
+					"ordinal": 1,
+					"instruction": "Boil the potatoes"
+				},
+				{
+					"id": 3,
+					"ordinal": 2,
+					"instruction": "Eat the potatoes"
+				}
+			]
+		}
+	]`
+
+	diff, err := jsonEq(expected, string(actual))
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if diff != "" {
+		t.Errorf("recipes don't match expected %s", diff)
+	}
+
+	expectedCode := 200
 	if res.StatusCode != expectedCode {
 		t.Errorf("expected status code %d, got %d", expectedCode, res.StatusCode)
 	}

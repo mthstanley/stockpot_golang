@@ -130,7 +130,8 @@ SELECT
     s.ordinal,
     s.instruction
 FROM step s
-WHERE s.recipe = $1;
+WHERE s.recipe = $1
+ORDER BY s.ordinal;
 
 -- name: GetRecipeIngredients :many
 SELECT
@@ -143,7 +144,8 @@ SELECT
 FROM recipe_ingredient ri
 JOIN ingredient i ON i.id = ri.ingredient
 JOIN unit riu ON ri.units = riu.id
-WHERE ri.recipe = $1;
+WHERE ri.recipe = $1
+ORDER BY ri.id;
 
 -- name: GetRecipes :many
 SELECT
@@ -169,7 +171,8 @@ SELECT
     s.recipe,
     s.ordinal,
     s.instruction
-FROM step s;
+FROM step s
+ORDER BY s.recipe, s.ordinal;
 
 -- name: GetAllRecipeIngredients :many
 SELECT
@@ -181,7 +184,8 @@ SELECT
     ri.preparation
 FROM recipe_ingredient ri
 JOIN ingredient i ON i.id = ri.ingredient
-JOIN unit riu ON ri.units = riu.id;
+JOIN unit riu ON ri.units = riu.id
+ORDER BY ri.recipe, ri.id;
 
 -- name: DeleteRecipe :exec
 DELETE FROM recipe
