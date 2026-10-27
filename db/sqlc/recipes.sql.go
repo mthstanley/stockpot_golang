@@ -463,9 +463,9 @@ const insertRecipeIngredients = `-- name: InsertRecipeIngredients :many
 INSERT INTO recipe_ingredient (recipe, ingredient, quantity, units, preparation) 
 SELECT 
     unnest($1::bigint[]) as recipe_id,
-    unnest(ARRAY(SELECT i.id FROM unnest($2::text[]) as n(ingredient_name) JOIN ingredient i ON n.ingredient_name = i.name)) as ingredient_id,
+    unnest(ARRAY(SELECT i.id FROM unnest($2::text[]) WITH ORDINALITY as n(ingredient_name, ord) JOIN ingredient i ON n.ingredient_name = i.name ORDER BY n.ord)) as ingredient_id,
     unnest($3::double precision[]) as quantity,
-    unnest(ARRAY(SELECT u.id FROM unnest($4::text[]) as n(unit_name) JOIN unit u ON n.unit_name = u.name)) as unit_id,
+    unnest(ARRAY(SELECT u.id FROM unnest($4::text[]) WITH ORDINALITY as n(unit_name, ord) JOIN unit u ON n.unit_name = u.name ORDER BY n.ord)) as unit_id,
     unnest($5::text[]) as preparation
 RETURNING id, recipe, ingredient, quantity, units, preparation
 `
@@ -629,9 +629,9 @@ INSERT INTO recipe_ingredient (id, recipe, ingredient, quantity, units, preparat
 SELECT 
     unnest($1::bigint[]) as id,
     unnest($2::bigint[]) as recipe_id,
-    unnest(ARRAY(SELECT i.id FROM unnest($3::text[]) as n(ingredient_name) JOIN ingredient i ON n.ingredient_name = i.name)) as ingredient_id,
+    unnest(ARRAY(SELECT i.id FROM unnest($3::text[]) WITH ORDINALITY as n(ingredient_name, ord) JOIN ingredient i ON n.ingredient_name = i.name ORDER BY n.ord)) as ingredient_id,
     unnest($4::double precision[]) as quantity,
-    unnest(ARRAY(SELECT u.id FROM unnest($5::text[]) as n(unit_name) JOIN unit u ON n.unit_name = u.name)) as unit_id,
+    unnest(ARRAY(SELECT u.id FROM unnest($5::text[]) WITH ORDINALITY as n(unit_name, ord) JOIN unit u ON n.unit_name = u.name ORDER BY n.ord)) as unit_id,
     unnest($6::text[]) as preparation
 ON CONFLICT (id) DO UPDATE SET
     recipe = EXCLUDED.recipe,
