@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -68,6 +69,7 @@ func (r RecipeRepository) Get(ctx context.Context) ([]recipe.Recipe, error) {
 				Ordinal:     int(s.Ordinal),
 				Instruction: s.Instruction,
 			})
+			recipes[s.Recipe] = val
 		} else {
 			return nil, errors.New("missing recipe for step")
 		}
@@ -90,12 +92,15 @@ func (r RecipeRepository) Get(ctx context.Context) ([]recipe.Recipe, error) {
 				Units:       recipe.Unit{ID: &i.Unit.ID, Name: i.Unit.Name},
 				Preparation: i.Preparation,
 			})
+			recipes[i.Recipe] = val
 		} else {
 			return nil, errors.New("missing recipe for recipe ingredient")
 		}
 	}
 
-	return slices.Collect(maps.Values(recipes)), nil
+	return slices.SortedFunc(maps.Values(recipes), func(a, b recipe.Recipe) int {
+		return cmp.Compare(*a.ID, *b.ID)
+	}), nil
 }
 
 func (r RecipeRepository) GetByID(ctx context.Context, id int64) (*recipe.Recipe, error) {

@@ -33,9 +33,9 @@ RETURNING *;
 INSERT INTO recipe_ingredient (recipe, ingredient, quantity, units, preparation) 
 SELECT 
     unnest(@recipe_ids::bigint[]) as recipe_id,
-    unnest(ARRAY(SELECT i.id FROM unnest(@ingredient_names::text[]) as n(ingredient_name) JOIN ingredient i ON n.ingredient_name = i.name)) as ingredient_id,
+    unnest(ARRAY(SELECT i.id FROM unnest(@ingredient_names::text[]) WITH ORDINALITY as n(ingredient_name, ord) JOIN ingredient i ON n.ingredient_name = i.name ORDER BY n.ord)) as ingredient_id,
     unnest(@quantities::double precision[]) as quantity,
-    unnest(ARRAY(SELECT u.id FROM unnest(@unit_names::text[]) as n(unit_name) JOIN unit u ON n.unit_name = u.name)) as unit_id,
+    unnest(ARRAY(SELECT u.id FROM unnest(@unit_names::text[]) WITH ORDINALITY as n(unit_name, ord) JOIN unit u ON n.unit_name = u.name ORDER BY n.ord)) as unit_id,
     unnest(@preparations::text[]) as preparation
 RETURNING *;
 
@@ -88,9 +88,9 @@ INSERT INTO recipe_ingredient (id, recipe, ingredient, quantity, units, preparat
 SELECT 
     unnest(@ids::bigint[]) as id,
     unnest(@recipe_ids::bigint[]) as recipe_id,
-    unnest(ARRAY(SELECT i.id FROM unnest(@ingredient_names::text[]) as n(ingredient_name) JOIN ingredient i ON n.ingredient_name = i.name)) as ingredient_id,
+    unnest(ARRAY(SELECT i.id FROM unnest(@ingredient_names::text[]) WITH ORDINALITY as n(ingredient_name, ord) JOIN ingredient i ON n.ingredient_name = i.name ORDER BY n.ord)) as ingredient_id,
     unnest(@quantities::double precision[]) as quantity,
-    unnest(ARRAY(SELECT u.id FROM unnest(@unit_names::text[]) as n(unit_name) JOIN unit u ON n.unit_name = u.name)) as unit_id,
+    unnest(ARRAY(SELECT u.id FROM unnest(@unit_names::text[]) WITH ORDINALITY as n(unit_name, ord) JOIN unit u ON n.unit_name = u.name ORDER BY n.ord)) as unit_id,
     unnest(@preparations::text[]) as preparation
 ON CONFLICT (id) DO UPDATE SET
     recipe = EXCLUDED.recipe,
@@ -130,7 +130,8 @@ SELECT
     s.ordinal,
     s.instruction
 FROM step s
-WHERE s.recipe = $1;
+WHERE s.recipe = $1
+ORDER BY s.ordinal;
 
 -- name: GetRecipeIngredients :many
 SELECT
@@ -143,7 +144,8 @@ SELECT
 FROM recipe_ingredient ri
 JOIN ingredient i ON i.id = ri.ingredient
 JOIN unit riu ON ri.units = riu.id
-WHERE ri.recipe = $1;
+WHERE ri.recipe = $1
+ORDER BY ri.id;
 
 -- name: GetRecipes :many
 SELECT
@@ -169,7 +171,8 @@ SELECT
     s.recipe,
     s.ordinal,
     s.instruction
-FROM step s;
+FROM step s
+ORDER BY s.recipe, s.ordinal;
 
 -- name: GetAllRecipeIngredients :many
 SELECT
@@ -181,7 +184,8 @@ SELECT
     ri.preparation
 FROM recipe_ingredient ri
 JOIN ingredient i ON i.id = ri.ingredient
-JOIN unit riu ON ri.units = riu.id;
+JOIN unit riu ON ri.units = riu.id
+ORDER BY ri.recipe, ri.id;
 
 -- name: DeleteRecipe :exec
 DELETE FROM recipe
