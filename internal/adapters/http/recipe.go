@@ -154,11 +154,11 @@ func toJSONSeconds(t *time.Duration) *JSONSeconds {
 }
 
 type GetRecipeIngredient struct {
-	ID          int64  `json:"id"`
-	Ingredient  string `json:"ingredient"`
-	Quantity    int    `json:"quantity"`
-	Units       string `json:"units"`
-	Preparation string `json:"preparation"`
+	ID          int64   `json:"id"`
+	Ingredient  string  `json:"ingredient"`
+	Quantity    float64 `json:"quantity"`
+	Units       string  `json:"units"`
+	Preparation string  `json:"preparation"`
 }
 
 func convertToGetRecipeIngredient(r recipe.RecipeIngredient) GetRecipeIngredient {
@@ -201,7 +201,7 @@ type GetRecipe struct {
 	PrepTime      *JSONSeconds          `json:"prep_time"`
 	CookTime      *JSONSeconds          `json:"cook_time"`
 	InactiveTime  *JSONSeconds          `json:"inactive_time"`
-	YieldQuantity int                   `json:"yield_quantity"`
+	YieldQuantity float64               `json:"yield_quantity"`
 	YieldUnits    string                `json:"yield_units"`
 	MinServings   *int                  `json:"min_servings"`
 	MaxServings   *int                  `json:"max_servings"`
@@ -240,10 +240,10 @@ func convertToGetRecipe(r recipe.Recipe) GetRecipe {
 }
 
 type CreateRecipeIngredient struct {
-	Ingredient  string `json:"ingredient"`
-	Quantity    int    `json:"quantity"`
-	Units       Units  `json:"units"`
-	Preparation string `json:"preparation"`
+	Ingredient  string  `json:"ingredient"`
+	Quantity    float64 `json:"quantity"`
+	Units       Units   `json:"units"`
+	Preparation string  `json:"preparation"`
 }
 
 func (c CreateRecipeIngredient) convertToRecipeIngredient() recipe.RecipeIngredient {
@@ -277,7 +277,7 @@ type CreateRecipe struct {
 	PrepTime      *JSONSeconds             `json:"prep_time"`
 	CookTime      *JSONSeconds             `json:"cook_time"`
 	InactiveTime  *JSONSeconds             `json:"inactive_time"`
-	YieldQuantity int                      `json:"yield_quantity"`
+	YieldQuantity float64                  `json:"yield_quantity"`
 	YieldUnits    Units                    `json:"yield_units"`
 	MinServings   *int                     `json:"min_servings"`
 	MaxServings   *int                     `json:"max_servings"`
@@ -312,11 +312,11 @@ func (c CreateRecipe) convertToRecipe(u user.User) recipe.Recipe {
 }
 
 type UpdateRecipeIngredient struct {
-	ID          *int64 `json:"id"`
-	Ingredient  string `json:"ingredient"`
-	Quantity    int    `json:"quantity"`
-	Units       Units  `json:"units"`
-	Preparation string `json:"preparation"`
+	ID          *int64  `json:"id"`
+	Ingredient  string  `json:"ingredient"`
+	Quantity    float64 `json:"quantity"`
+	Units       Units   `json:"units"`
+	Preparation string  `json:"preparation"`
 }
 
 func (u UpdateRecipeIngredient) convertToRecipeIngredient() recipe.RecipeIngredient {
@@ -351,7 +351,7 @@ type UpdateRecipe struct {
 	PrepTime      *JSONSeconds             `json:"prep_time"`
 	CookTime      *JSONSeconds             `json:"cook_time"`
 	InactiveTime  *JSONSeconds             `json:"inactive_time"`
-	YieldQuantity int                      `json:"yield_quantity"`
+	YieldQuantity float64                  `json:"yield_quantity"`
 	YieldUnits    Units                    `json:"yield_units"`
 	MinServings   *int                     `json:"min_servings"`
 	MaxServings   *int                     `json:"max_servings"`
@@ -505,7 +505,7 @@ func (h RecipeHandler) HandleGetRecipe(w http.ResponseWriter, r *http.Request) e
 
 		ingredients := []string{}
 		for _, i := range rec.Ingredients {
-			ingredients = append(ingredients, fmt.Sprintf("%d %s %s", i.Quantity, i.Units.Name, i.Ingredient.Name))
+			ingredients = append(ingredients, fmt.Sprintf("%g %s %s", i.Quantity, i.Units.Name, i.Ingredient.Name))
 		}
 		instructions := []string{}
 		for _, i := range rec.Steps {

@@ -34,7 +34,7 @@ INSERT INTO recipe_ingredient (recipe, ingredient, quantity, units, preparation)
 SELECT 
     unnest(@recipe_ids::bigint[]) as recipe_id,
     unnest(ARRAY(SELECT i.id FROM unnest(@ingredient_names::text[]) as n(ingredient_name) JOIN ingredient i ON n.ingredient_name = i.name)) as ingredient_id,
-    unnest(@quantities::integer[]) as quantity,
+    unnest(@quantities::double precision[]) as quantity,
     unnest(ARRAY(SELECT u.id FROM unnest(@unit_names::text[]) as n(unit_name) JOIN unit u ON n.unit_name = u.name)) as unit_id,
     unnest(@preparations::text[]) as preparation
 RETURNING *;
@@ -89,7 +89,7 @@ SELECT
     unnest(@ids::bigint[]) as id,
     unnest(@recipe_ids::bigint[]) as recipe_id,
     unnest(ARRAY(SELECT i.id FROM unnest(@ingredient_names::text[]) as n(ingredient_name) JOIN ingredient i ON n.ingredient_name = i.name)) as ingredient_id,
-    unnest(@quantities::integer[]) as quantity,
+    unnest(@quantities::double precision[]) as quantity,
     unnest(ARRAY(SELECT u.id FROM unnest(@unit_names::text[]) as n(unit_name) JOIN unit u ON n.unit_name = u.name)) as unit_id,
     unnest(@preparations::text[]) as preparation
 ON CONFLICT (id) DO UPDATE SET

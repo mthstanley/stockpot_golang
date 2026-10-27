@@ -353,14 +353,14 @@ func TestCreateRecipe(t *testing.T) {
 			"prep_time": 360,
 			"cook_time": 400,
 			"inactive_time": 8600,
-			"yield_quantity": 200,
+			"yield_quantity": 1.5,
 			"yield_units": "grams",
 			"min_servings": 4,
 			"max_servings": 6,
 			"ingredients": [
 				{
 					"ingredient": "carrots",
-					"quantity": 200,
+					"quantity": 0.5,
 					"units": "grams",
 					"preparation": "diced"
 				},
@@ -400,7 +400,7 @@ func TestCreateRecipe(t *testing.T) {
         "prep_time": 360,
         "cook_time": 400,
         "inactive_time": 8600,
-        "yield_quantity": 200,
+        "yield_quantity": 1.5,
         "yield_units": "grams",
         "min_servings": 4,
         "max_servings": 6,
@@ -408,7 +408,7 @@ func TestCreateRecipe(t *testing.T) {
             {
                 "id": 1,
                 "ingredient": "carrots",
-                "quantity": 200,
+                "quantity": 0.5,
                 "units": "grams",
                 "preparation": "diced"
             },

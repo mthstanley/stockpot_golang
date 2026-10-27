@@ -44,7 +44,7 @@ func (r RecipeRepository) Get(ctx context.Context) ([]recipe.Recipe, error) {
 			PrepTime:      convertEpochSeconds(r.PrepTime),
 			CookTime:      convertEpochSeconds(r.CookTime),
 			InactiveTime:  convertEpochSeconds(r.InactiveTime),
-			YieldQuantity: int(r.YieldQuantity),
+			YieldQuantity: r.YieldQuantity,
 			YieldUnits:    recipe.Unit{ID: &r.Unit.ID, Name: r.Unit.Name},
 			MinServings:   convertInt4(r.MinServings),
 			MaxServings:   convertInt4(r.MaxServings),
@@ -86,7 +86,7 @@ func (r RecipeRepository) Get(ctx context.Context) ([]recipe.Recipe, error) {
 				ID:          &i.ID,
 				RecipeID:    &i.Recipe,
 				Ingredient:  recipe.Ingredient{ID: &i.Ingredient.ID, Name: i.Ingredient.Name},
-				Quantity:    int(i.Quantity),
+				Quantity:    i.Quantity,
 				Units:       recipe.Unit{ID: &i.Unit.ID, Name: i.Unit.Name},
 				Preparation: i.Preparation,
 			})
@@ -118,7 +118,7 @@ func (r RecipeRepository) GetByID(ctx context.Context, id int64) (*recipe.Recipe
 		PrepTime:      convertEpochSeconds(dbRecipe.PrepTime),
 		CookTime:      convertEpochSeconds(dbRecipe.CookTime),
 		InactiveTime:  convertEpochSeconds(dbRecipe.InactiveTime),
-		YieldQuantity: int(dbRecipe.YieldQuantity),
+		YieldQuantity: dbRecipe.YieldQuantity,
 		YieldUnits:    recipe.Unit{ID: &dbRecipe.Unit.ID, Name: dbRecipe.Unit.Name},
 		MinServings:   convertInt4(dbRecipe.MinServings),
 		MaxServings:   convertInt4(dbRecipe.MaxServings),
@@ -154,7 +154,7 @@ func (r RecipeRepository) GetByID(ctx context.Context, id int64) (*recipe.Recipe
 			ID:          &i.ID,
 			RecipeID:    &i.Recipe,
 			Ingredient:  recipe.Ingredient{ID: &i.Ingredient.ID, Name: i.Ingredient.Name},
-			Quantity:    int(i.Quantity),
+			Quantity:    i.Quantity,
 			Units:       recipe.Unit{ID: &i.Unit.ID, Name: i.Unit.Name},
 			Preparation: i.Preparation,
 		})
@@ -188,7 +188,7 @@ func (r RecipeRepository) Create(ctx context.Context, rec recipe.Recipe) (*recip
 		PrepTime:       convertToInterval(rec.PrepTime),
 		CookTime:       convertToInterval(rec.CookTime),
 		InactiveTime:   convertToInterval(rec.InactiveTime),
-		YieldQuantity:  int32(rec.YieldQuantity),
+		YieldQuantity:  rec.YieldQuantity,
 		YieldUnitsName: rec.YieldUnits.Name,
 		MinServings:    convertToInt4(rec.MinServings),
 		MaxServings:    convertToInt4(rec.MaxServings),
@@ -213,7 +213,7 @@ func (r RecipeRepository) Create(ctx context.Context, rec recipe.Recipe) (*recip
 		ingredients.RecipeIds = append(ingredients.RecipeIds, recipeResult.ID)
 		ingredients.IngredientNames = append(ingredients.IngredientNames, i.Ingredient.Name)
 		ingredients.Preparations = append(ingredients.Preparations, i.Preparation)
-		ingredients.Quantities = append(ingredients.Quantities, int32(i.Quantity))
+		ingredients.Quantities = append(ingredients.Quantities, i.Quantity)
 		ingredients.UnitNames = append(ingredients.UnitNames, i.Units.Name)
 	}
 	_, err = qtx.InsertRecipeIngredients(ctx, ingredients)
@@ -253,7 +253,7 @@ func (r RecipeRepository) Update(ctx context.Context, rec recipe.Recipe) (*recip
 		PrepTime:       convertToInterval(rec.PrepTime),
 		CookTime:       convertToInterval(rec.CookTime),
 		InactiveTime:   convertToInterval(rec.InactiveTime),
-		YieldQuantity:  int32(rec.YieldQuantity),
+		YieldQuantity:  rec.YieldQuantity,
 		YieldUnitsName: rec.YieldUnits.Name,
 		MinServings:    convertToInt4(rec.MinServings),
 		MaxServings:    convertToInt4(rec.MaxServings),
@@ -307,13 +307,13 @@ func (r RecipeRepository) Update(ctx context.Context, rec recipe.Recipe) (*recip
 			uingredients.RecipeIds = append(uingredients.RecipeIds, recipeResult.ID)
 			uingredients.IngredientNames = append(uingredients.IngredientNames, i.Ingredient.Name)
 			uingredients.Preparations = append(uingredients.Preparations, i.Preparation)
-			uingredients.Quantities = append(uingredients.Quantities, int32(i.Quantity))
+			uingredients.Quantities = append(uingredients.Quantities, i.Quantity)
 			uingredients.UnitNames = append(uingredients.UnitNames, i.Units.Name)
 		} else {
 			iingredients.RecipeIds = append(iingredients.RecipeIds, recipeResult.ID)
 			iingredients.IngredientNames = append(iingredients.IngredientNames, i.Ingredient.Name)
 			iingredients.Preparations = append(iingredients.Preparations, i.Preparation)
-			iingredients.Quantities = append(iingredients.Quantities, int32(i.Quantity))
+			iingredients.Quantities = append(iingredients.Quantities, i.Quantity)
 			iingredients.UnitNames = append(iingredients.UnitNames, i.Units.Name)
 		}
 	}
