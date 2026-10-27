@@ -33,7 +33,7 @@ type Recipe struct {
 	PrepTime      pgtype.Interval
 	CookTime      pgtype.Interval
 	InactiveTime  pgtype.Interval
-	YieldQuantity int32
+	YieldQuantity float64
 	YieldUnits    int64
 	MinServings   pgtype.Int4
 	MaxServings   pgtype.Int4
@@ -43,7 +43,7 @@ type RecipeIngredient struct {
 	ID          int64
 	Recipe      int64
 	Ingredient  int64
-	Quantity    int32
+	Quantity    float64
 	Units       int64
 	Preparation string
 }

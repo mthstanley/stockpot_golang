@@ -109,6 +109,7 @@ const RecipeForm = ({ recipe }: { recipe?: MutateRecipeRequest }) => {
                 <input
                   id="yieldQuantity"
                   type="number"
+                  step="any"
                   {...register("yieldQuantity", {
                     required: true,
                     valueAsNumber: true,
@@ -170,6 +171,7 @@ const RecipeForm = ({ recipe }: { recipe?: MutateRecipeRequest }) => {
                     <input
                       id={`ingredients.${index}.quantity`}
                       type="number"
+                      step="any"
                       {...register(`ingredients.${index}.quantity`, {
                         required: true,
                         valueAsNumber: true,

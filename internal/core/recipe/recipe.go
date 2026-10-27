@@ -23,7 +23,7 @@ type RecipeIngredient struct {
 	ID          *int64
 	RecipeID    *int64
 	Ingredient  Ingredient
-	Quantity    int
+	Quantity    float64
 	Units       Unit
 	Preparation string
 }
@@ -43,7 +43,7 @@ type Recipe struct {
 	PrepTime      *time.Duration
 	CookTime      *time.Duration
 	InactiveTime  *time.Duration
-	YieldQuantity int
+	YieldQuantity float64
 	YieldUnits    Unit
 	MinServings   *int
 	MaxServings   *int

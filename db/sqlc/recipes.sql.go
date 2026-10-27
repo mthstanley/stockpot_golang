@@ -68,7 +68,7 @@ type GetAllRecipeIngredientsRow struct {
 	ID          int64
 	Recipe      int64
 	Ingredient  Ingredient
-	Quantity    int32
+	Quantity    float64
 	Unit        Unit
 	Preparation string
 }
@@ -164,7 +164,7 @@ type GetRecipeRow struct {
 	PrepTime      pgtype.Numeric
 	CookTime      pgtype.Numeric
 	InactiveTime  pgtype.Numeric
-	YieldQuantity int32
+	YieldQuantity float64
 	Unit          Unit
 	MinServings   pgtype.Int4
 	MaxServings   pgtype.Int4
@@ -209,7 +209,7 @@ type GetRecipeIngredientsRow struct {
 	ID          int64
 	Recipe      int64
 	Ingredient  Ingredient
-	Quantity    int32
+	Quantity    float64
 	Unit        Unit
 	Preparation string
 }
@@ -305,7 +305,7 @@ type GetRecipesRow struct {
 	PrepTime      pgtype.Numeric
 	CookTime      pgtype.Numeric
 	InactiveTime  pgtype.Numeric
-	YieldQuantity int32
+	YieldQuantity float64
 	Unit          Unit
 	MinServings   pgtype.Int4
 	MaxServings   pgtype.Int4
@@ -423,7 +423,7 @@ type InsertRecipeParams struct {
 	PrepTime       pgtype.Interval
 	CookTime       pgtype.Interval
 	InactiveTime   pgtype.Interval
-	YieldQuantity  int32
+	YieldQuantity  float64
 	MinServings    pgtype.Int4
 	MaxServings    pgtype.Int4
 	YieldUnitsName string
@@ -464,7 +464,7 @@ INSERT INTO recipe_ingredient (recipe, ingredient, quantity, units, preparation)
 SELECT 
     unnest($1::bigint[]) as recipe_id,
     unnest(ARRAY(SELECT i.id FROM unnest($2::text[]) as n(ingredient_name) JOIN ingredient i ON n.ingredient_name = i.name)) as ingredient_id,
-    unnest($3::integer[]) as quantity,
+    unnest($3::double precision[]) as quantity,
     unnest(ARRAY(SELECT u.id FROM unnest($4::text[]) as n(unit_name) JOIN unit u ON n.unit_name = u.name)) as unit_id,
     unnest($5::text[]) as preparation
 RETURNING id, recipe, ingredient, quantity, units, preparation
@@ -473,7 +473,7 @@ RETURNING id, recipe, ingredient, quantity, units, preparation
 type InsertRecipeIngredientsParams struct {
 	RecipeIds       []int64
 	IngredientNames []string
-	Quantities      []int32
+	Quantities      []float64
 	UnitNames       []string
 	Preparations    []string
 }
@@ -587,7 +587,7 @@ type UpsertRecipeParams struct {
 	PrepTime       pgtype.Interval
 	CookTime       pgtype.Interval
 	InactiveTime   pgtype.Interval
-	YieldQuantity  int32
+	YieldQuantity  float64
 	MinServings    pgtype.Int4
 	MaxServings    pgtype.Int4
 	YieldUnitsName string
@@ -630,7 +630,7 @@ SELECT
     unnest($1::bigint[]) as id,
     unnest($2::bigint[]) as recipe_id,
     unnest(ARRAY(SELECT i.id FROM unnest($3::text[]) as n(ingredient_name) JOIN ingredient i ON n.ingredient_name = i.name)) as ingredient_id,
-    unnest($4::integer[]) as quantity,
+    unnest($4::double precision[]) as quantity,
     unnest(ARRAY(SELECT u.id FROM unnest($5::text[]) as n(unit_name) JOIN unit u ON n.unit_name = u.name)) as unit_id,
     unnest($6::text[]) as preparation
 ON CONFLICT (id) DO UPDATE SET
@@ -646,7 +646,7 @@ type UpsertRecipeIngredientsParams struct {
 	Ids             []int64
 	RecipeIds       []int64
 	IngredientNames []string
-	Quantities      []int32
+	Quantities      []float64
 	UnitNames       []string
 	Preparations    []string
 }
