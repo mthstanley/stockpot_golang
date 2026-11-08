@@ -11,6 +11,18 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countRecipes = `-- name: CountRecipes :one
+SELECT COUNT(1)
+FROM recipe
+`
+
+func (q *Queries) CountRecipes(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countRecipes)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const deleteRecipe = `-- name: DeleteRecipe :exec
 DELETE FROM recipe
 WHERE id = $1
@@ -62,6 +74,7 @@ SELECT
 FROM recipe_ingredient ri
 JOIN ingredient i ON i.id = ri.ingredient
 JOIN unit riu ON ri.units = riu.id
+WHERE ri.recipe = ANY($1::bigint[])
 ORDER BY ri.recipe, ri.id
 `
 
@@ -74,8 +87,8 @@ type GetAllRecipeIngredientsRow struct {
 	Preparation string
 }
 
-func (q *Queries) GetAllRecipeIngredients(ctx context.Context) ([]GetAllRecipeIngredientsRow, error) {
-	rows, err := q.db.Query(ctx, getAllRecipeIngredients)
+func (q *Queries) GetAllRecipeIngredients(ctx context.Context, recipeIds []int64) ([]GetAllRecipeIngredientsRow, error) {
+	rows, err := q.db.Query(ctx, getAllRecipeIngredients, recipeIds)
 	if err != nil {
 		return nil, err
 	}
@@ -110,11 +123,12 @@ SELECT
     s.ordinal,
     s.instruction
 FROM step s
+WHERE s.recipe = ANY($1::bigint[])
 ORDER BY s.recipe, s.ordinal
 `
 
-func (q *Queries) GetAllRecipeSteps(ctx context.Context) ([]Step, error) {
-	rows, err := q.db.Query(ctx, getAllRecipeSteps)
+func (q *Queries) GetAllRecipeSteps(ctx context.Context, recipeIds []int64) ([]Step, error) {
+	rows, err := q.db.Query(ctx, getAllRecipeSteps, recipeIds)
 	if err != nil {
 		return nil, err
 	}
@@ -299,7 +313,14 @@ FROM
     recipe AS r
     JOIN app_user au ON r.author = au.id
     JOIN unit ru ON r.yield_units = ru.id
+ORDER BY r.id ASC
+LIMIT $2::bigint OFFSET $1::bigint
 `
+
+type GetRecipesParams struct {
+	Offset int64
+	Limit  int64
+}
 
 type GetRecipesRow struct {
 	ID            int64
@@ -315,8 +336,8 @@ type GetRecipesRow struct {
 	MaxServings   pgtype.Int4
 }
 
-func (q *Queries) GetRecipes(ctx context.Context) ([]GetRecipesRow, error) {
-	rows, err := q.db.Query(ctx, getRecipes)
+func (q *Queries) GetRecipes(ctx context.Context, arg GetRecipesParams) ([]GetRecipesRow, error) {
+	rows, err := q.db.Query(ctx, getRecipes, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}

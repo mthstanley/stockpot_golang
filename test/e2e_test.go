@@ -1777,7 +1777,13 @@ func TestGetRecipes(t *testing.T) {
 				}
 			]
 		}
-	]}`
+	],
+	"meta": {
+		"page": 1,
+		"size": 10,
+		"pages": 1,
+		"items": 2
+	}}`
 
 	diff, err := jsonEq(expected, string(actual))
 	if err != nil {
@@ -1790,5 +1796,165 @@ func TestGetRecipes(t *testing.T) {
 	expectedCode := 200
 	if res.StatusCode != expectedCode {
 		t.Errorf("expected status code %d, got %d", expectedCode, res.StatusCode)
+	}
+}
+
+type paginatedRecipes struct {
+	Data []struct {
+		ID int64 `json:"id"`
+	} `json:"data"`
+	Meta stockpothttp.ResponseMeta `json:"meta"`
+}
+
+func getRecipesPage(t *testing.T, server *httptest.Server, query string) (int, paginatedRecipes) {
+	t.Helper()
+
+	req, err := http.NewRequest("GET", server.URL+"/recipe"+query, nil)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	res, err := server.Client().Do(req)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	defer res.Body.Close()
+
+	var body paginatedRecipes
+	if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	return res.StatusCode, body
+}
+
+func TestGetRecipesPagination(t *testing.T) {
+	ctx := context.Background()
+	server := setupHTTPServer(ctx, t, serverConfig{disableUserSignup: false})
+
+	_, err := server.Client().Post(server.URL+"/user", "application/json", strings.NewReader(`{"username": "test", "password": "secret", "name": "joe"}`))
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	for i := 1; i <= 5; i++ {
+		body := fmt.Sprintf(`{
+			"title": "Recipe %d",
+			"yield_quantity": 1,
+			"yield_units": "grams",
+			"ingredients": [],
+			"steps": []
+		}`, i)
+		req, err := http.NewRequest("POST", server.URL+"/recipe", strings.NewReader(body))
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		req.SetBasicAuth("test", "secret")
+		res, err := server.Client().Do(req)
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		res.Body.Close()
+		if res.StatusCode != 201 {
+			t.Fatalf("expected status code 201 creating recipe, got %d", res.StatusCode)
+		}
+	}
+
+	tests := []struct {
+		name        string
+		query       string
+		expectedIDs []int64
+		expected    stockpothttp.ResponseMeta
+	}{
+		{"defaults", "", []int64{1, 2, 3, 4, 5}, stockpothttp.ResponseMeta{Page: 1, Size: 10, Pages: 1, Items: 5}},
+		{"first page", "?page=1&size=2", []int64{1, 2}, stockpothttp.ResponseMeta{Page: 1, Size: 2, Pages: 3, Items: 5}},
+		{"middle page", "?page=2&size=2", []int64{3, 4}, stockpothttp.ResponseMeta{Page: 2, Size: 2, Pages: 3, Items: 5}},
+		{"last partial page", "?page=3&size=2", []int64{5}, stockpothttp.ResponseMeta{Page: 3, Size: 2, Pages: 3, Items: 5}},
+		{"past the end", "?page=4&size=2", []int64{}, stockpothttp.ResponseMeta{Page: 4, Size: 2, Pages: 3, Items: 5}},
+		{"max size", "?size=100", []int64{1, 2, 3, 4, 5}, stockpothttp.ResponseMeta{Page: 1, Size: 100, Pages: 1, Items: 5}},
+		// offset (page-1)*size would overflow int32
+		{"max page", "?page=2147483647&size=100", []int64{}, stockpothttp.ResponseMeta{Page: 2147483647, Size: 100, Pages: 1, Items: 5}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			status, body := getRecipesPage(t, server, tt.query)
+			if status != 200 {
+				t.Errorf("expected status code 200, got %d", status)
+			}
+
+			ids := []int64{}
+			for _, r := range body.Data {
+				ids = append(ids, r.ID)
+			}
+			if diff := cmp.Diff(tt.expectedIDs, ids); diff != "" {
+				t.Errorf("recipe ids don't match expected (- wanted, + got): %s", diff)
+			}
+			if diff := cmp.Diff(tt.expected, body.Meta); diff != "" {
+				t.Errorf("meta doesn't match expected (- wanted, + got): %s", diff)
+			}
+		})
+	}
+}
+
+func TestGetRecipesEmpty(t *testing.T) {
+	ctx := context.Background()
+	server := setupHTTPServer(ctx, t, serverConfig{disableUserSignup: false})
+
+	status, body := getRecipesPage(t, server, "")
+	if status != 200 {
+		t.Errorf("expected status code 200, got %d", status)
+	}
+	if len(body.Data) != 0 {
+		t.Errorf("expected no recipes, got %d", len(body.Data))
+	}
+	expected := stockpothttp.ResponseMeta{Page: 1, Size: 10, Pages: 1, Items: 0}
+	if diff := cmp.Diff(expected, body.Meta); diff != "" {
+		t.Errorf("meta doesn't match expected (- wanted, + got): %s", diff)
+	}
+}
+
+func TestGetRecipesInvalidPagination(t *testing.T) {
+	ctx := context.Background()
+	server := setupHTTPServer(ctx, t, serverConfig{disableUserSignup: false})
+
+	tests := []struct {
+		name    string
+		query   string
+		details string
+	}{
+		{"zero page", "?page=0", "failed to parse query value 0 for key page: page must be between 1 and 2147483647"},
+		{"negative page", "?page=-1", "failed to parse query value -1 for key page: page must be between 1 and 2147483647"},
+		{"non-numeric page", "?page=abc", `failed to parse query value abc for key page: strconv.ParseInt: parsing "abc": invalid syntax`},
+		{"page out of int32 range", "?page=2147483648", `failed to parse query value 2147483648 for key page: strconv.ParseInt: parsing "2147483648": value out of range`},
+		{"zero size", "?size=0", "failed to parse query value 0 for key size: size must be between 1 and 100"},
+		{"size over max", "?size=101", "failed to parse query value 101 for key size: size must be between 1 and 100"},
+		{"fractional size", "?size=1.5", `failed to parse query value 1.5 for key size: strconv.ParseInt: parsing "1.5": invalid syntax`},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res, err := server.Client().Get(server.URL + "/recipe" + tt.query)
+			if err != nil {
+				t.Fatalf("expected no error, got %v", err)
+			}
+			defer res.Body.Close()
+
+			actual, _ := io.ReadAll(res.Body)
+			expected, _ := json.Marshal(map[string]any{
+				"data":   nil,
+				"errors": []map[string]string{{"error": "Invalid query parameter", "details": tt.details}},
+			})
+			diff, err := jsonEq(string(expected), string(actual))
+			if err != nil {
+				t.Fatalf("expected no error, got %v", err)
+			}
+			if diff != "" {
+				t.Errorf("error response doesn't match expected %s", diff)
+			}
+
+			if res.StatusCode != 400 {
+				t.Errorf("expected status code 400, got %d", res.StatusCode)
+			}
+		})
 	}
 }

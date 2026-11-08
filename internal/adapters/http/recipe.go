@@ -426,7 +426,15 @@ func convertToGetUnit(r recipe.Unit) GetUnit {
 }
 
 func (h RecipeHandler) HandleGetRecipes(w http.ResponseWriter, r *http.Request) error {
-	recipes, err := h.recipeService.Get(r.Context())
+	page, size, err := parsePagination(r)
+	if err != nil {
+		return err
+	}
+	recipeCount, err := h.recipeService.Count(r.Context())
+	if err != nil {
+		return fmt.Errorf("failed to get recipe count: %w", err)
+	}
+	recipes, err := h.recipeService.Get(r.Context(), page, size)
 	if err != nil {
 		return fmt.Errorf("failed to get recipe: %w", err)
 	}
@@ -435,7 +443,19 @@ func (h RecipeHandler) HandleGetRecipes(w http.ResponseWriter, r *http.Request) 
 	for _, rec := range recipes {
 		getRecipes = append(getRecipes, convertToGetRecipe(rec))
 	}
-	return writeJSON(w, http.StatusOK, APIResponse[[]GetRecipe]{Data: getRecipes})
+	return writeJSON(
+		w,
+		http.StatusOK,
+		APIResponse[[]GetRecipe]{
+			Data: getRecipes,
+			Meta: ResponseMeta{
+				Page:  int(page),
+				Size:  int(size),
+				Pages: max(1, (int(recipeCount)+int(size)-1)/int(size)),
+				Items: int(recipeCount),
+			},
+		},
+	)
 }
 
 func (h RecipeHandler) HandleGetRecipe(w http.ResponseWriter, r *http.Request) error {

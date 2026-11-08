@@ -3,7 +3,14 @@ package http
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
+	"strconv"
+)
+
+const (
+	defaultPageSize = 10
+	maxPageSize     = 100
 )
 
 type ResponseMeta struct {
@@ -32,4 +39,35 @@ func writeJSON[T any](w http.ResponseWriter, status int, body APIResponse[T]) er
 	}
 
 	return nil
+}
+
+func parseQueryInt32(r *http.Request, key string, def, lo, hi int32) (int32, error) {
+	raw := r.URL.Query().Get(key)
+	if raw == "" {
+		return def, nil
+	}
+
+	value, err := strconv.ParseInt(raw, 10, 32)
+	if err != nil {
+		return 0, &QueryValueParseError{Key: key, Value: raw, Err: err}
+	}
+	if value < int64(lo) || value > int64(hi) {
+		return 0, &QueryValueParseError{Key: key, Value: raw, Err: fmt.Errorf("%s must be between %d and %d", key, lo, hi)}
+	}
+
+	return int32(value), nil
+}
+
+func parsePagination(r *http.Request) (page int32, size int32, err error) {
+	page, err = parseQueryInt32(r, "page", 1, 1, math.MaxInt32)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	size, err = parseQueryInt32(r, "size", defaultPageSize, 1, maxPageSize)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return page, size, nil
 }

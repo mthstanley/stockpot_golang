@@ -163,7 +163,9 @@ SELECT
 FROM
     recipe AS r
     JOIN app_user au ON r.author = au.id
-    JOIN unit ru ON r.yield_units = ru.id;
+    JOIN unit ru ON r.yield_units = ru.id
+ORDER BY r.id ASC
+LIMIT sqlc.arg('limit')::bigint OFFSET sqlc.arg('offset')::bigint;
 
 -- name: GetAllRecipeSteps :many
 SELECT
@@ -172,6 +174,7 @@ SELECT
     s.ordinal,
     s.instruction
 FROM step s
+WHERE s.recipe = ANY(@recipe_ids::bigint[])
 ORDER BY s.recipe, s.ordinal;
 
 -- name: GetAllRecipeIngredients :many
@@ -185,6 +188,7 @@ SELECT
 FROM recipe_ingredient ri
 JOIN ingredient i ON i.id = ri.ingredient
 JOIN unit riu ON ri.units = riu.id
+WHERE ri.recipe = ANY(@recipe_ids::bigint[])
 ORDER BY ri.recipe, ri.id;
 
 -- name: DeleteRecipe :exec
@@ -195,3 +199,7 @@ WHERE id = $1;
 SELECT *
 FROM unit
 WHERE name != 'unknown';
+
+-- name: CountRecipes :one
+SELECT COUNT(1)
+FROM recipe;

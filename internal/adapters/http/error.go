@@ -24,6 +24,20 @@ func (e *PathValueParseError) Unwrap() error {
 	return e.Err
 }
 
+type QueryValueParseError struct {
+	Key   string
+	Value string
+	Err   error
+}
+
+func (e *QueryValueParseError) Error() string {
+	return fmt.Sprintf("failed to parse query value %s for key %s: %v", e.Value, e.Key, e.Err)
+}
+
+func (e *QueryValueParseError) Unwrap() error {
+	return e.Err
+}
+
 var RequestBodyDecodeError = errors.New("invalid request body")
 
 type ErrorResponse struct {
@@ -73,6 +87,12 @@ func HandleErrors(next HandlerFuncWithError) http.Handler {
 			status = http.StatusBadRequest
 			errResponse = ErrorResponse{
 				Error:   "Invalid path parameter",
+				Details: perr.Error(),
+			}
+		} else if perr, ok := errors.AsType[*QueryValueParseError](err); ok {
+			status = http.StatusBadRequest
+			errResponse = ErrorResponse{
+				Error:   "Invalid query parameter",
 				Details: perr.Error(),
 			}
 		} else if errors.Is(err, RequestBodyDecodeError) {
