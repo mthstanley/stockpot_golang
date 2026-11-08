@@ -435,18 +435,7 @@ func (h RecipeHandler) HandleGetRecipes(w http.ResponseWriter, r *http.Request) 
 	for _, rec := range recipes {
 		getRecipes = append(getRecipes, convertToGetRecipe(rec))
 	}
-	data, err := json.Marshal(getRecipes)
-	if err != nil {
-		return fmt.Errorf("failed to json encode response body: %w", err)
-	}
-
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write(data); err != nil {
-		return fmt.Errorf("failed to write response body: %w", err)
-	}
-
-	return nil
+	return writeJSON(w, http.StatusOK, APIResponse[[]GetRecipe]{Data: getRecipes})
 }
 
 func (h RecipeHandler) HandleGetRecipe(w http.ResponseWriter, r *http.Request) error {
@@ -464,15 +453,8 @@ func (h RecipeHandler) HandleGetRecipe(w http.ResponseWriter, r *http.Request) e
 
 	switch {
 	case strings.Contains(acceptHeader, "application/json"):
-		data, err := json.Marshal(convertToGetRecipe(*rec))
-		if err != nil {
-			return fmt.Errorf("failed to json encode response body: %w", err)
-		}
-
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(http.StatusOK)
-		if _, err := w.Write(data); err != nil {
-			return fmt.Errorf("failed to write response body: %w", err)
+		if err := writeJSON(w, http.StatusOK, APIResponse[GetRecipe]{Data: convertToGetRecipe(*rec)}); err != nil {
+			return err
 		}
 	default:
 		htmlTemplate := `
@@ -565,18 +547,7 @@ func (h RecipeHandler) HandleCreateRecipe(w http.ResponseWriter, r *http.Request
 		return fmt.Errorf("failed to create recipe: %w", err)
 	}
 
-	data, err := json.Marshal(convertToGetRecipe(*createdRecipe))
-	if err != nil {
-		return fmt.Errorf("failed to json encode response body: %w", err)
-	}
-
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusCreated)
-	if _, err := w.Write(data); err != nil {
-		return fmt.Errorf("failed to write response body: %w", err)
-	}
-
-	return nil
+	return writeJSON(w, http.StatusCreated, APIResponse[GetRecipe]{Data: convertToGetRecipe(*createdRecipe)})
 }
 
 func (h RecipeHandler) HandleUpdateRecipe(w http.ResponseWriter, r *http.Request) error {
@@ -610,18 +581,7 @@ func (h RecipeHandler) HandleUpdateRecipe(w http.ResponseWriter, r *http.Request
 		return fmt.Errorf("failed to update recipe: %w", err)
 	}
 
-	data, err := json.Marshal(convertToGetRecipe(*updatedRecipe))
-	if err != nil {
-		return fmt.Errorf("failed to json encode response body: %w", err)
-	}
-
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write(data); err != nil {
-		return fmt.Errorf("failed to write response body: %w", err)
-	}
-
-	return nil
+	return writeJSON(w, http.StatusOK, APIResponse[GetRecipe]{Data: convertToGetRecipe(*updatedRecipe)})
 }
 
 func (h RecipeHandler) HandleDeleteRecipe(w http.ResponseWriter, r *http.Request) error {
@@ -649,18 +609,7 @@ func (h RecipeHandler) HandleDeleteRecipe(w http.ResponseWriter, r *http.Request
 		return fmt.Errorf("failed to delete recipe: %w", err)
 	}
 
-	data, err := json.Marshal(convertToGetRecipe(*deletedRecipe))
-	if err != nil {
-		return fmt.Errorf("failed to json encode response body: %w", err)
-	}
-
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write(data); err != nil {
-		return fmt.Errorf("failed to write response body: %w", err)
-	}
-
-	return nil
+	return writeJSON(w, http.StatusOK, APIResponse[GetRecipe]{Data: convertToGetRecipe(*deletedRecipe)})
 }
 
 func (h RecipeHandler) HandleGetUnits(w http.ResponseWriter, r *http.Request) error {
@@ -673,16 +622,5 @@ func (h RecipeHandler) HandleGetUnits(w http.ResponseWriter, r *http.Request) er
 	for _, u := range units {
 		getUnits = append(getUnits, convertToGetUnit(u))
 	}
-	data, err := json.Marshal(getUnits)
-	if err != nil {
-		return fmt.Errorf("failed to json encode response body: %w", err)
-	}
-
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write(data); err != nil {
-		return fmt.Errorf("failed to write response body: %w", err)
-	}
-
-	return nil
+	return writeJSON(w, http.StatusOK, APIResponse[[]GetUnit]{Data: getUnits})
 }

@@ -27,8 +27,8 @@ func (e *PathValueParseError) Unwrap() error {
 var RequestBodyDecodeError = errors.New("invalid request body")
 
 type ErrorResponse struct {
-	Error   string
-	Details string
+	Error   string `json:"error"`
+	Details string `json:"details,omitempty"`
 }
 
 func handleRequestBodyDecodeError(err error) (int, ErrorResponse) {
@@ -91,7 +91,7 @@ func HandleErrors(next HandlerFuncWithError) http.Handler {
 			log.Printf("error handling request: %v", err)
 		}
 
-		data, err := json.Marshal(&errResponse)
+		data, err := json.Marshal(&APIResponse[any]{Errors: []ErrorResponse{errResponse}})
 		if err != nil {
 			log.Println("error json encoding response:", err)
 			w.WriteHeader(http.StatusInternalServerError)

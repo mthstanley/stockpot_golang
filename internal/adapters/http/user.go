@@ -67,18 +67,7 @@ func (h UserHandler) HandleGetUser(w http.ResponseWriter, r *http.Request) error
 		return fmt.Errorf("failed to get user: %w", err)
 	}
 
-	data, err := json.Marshal(convertToGetUser(u))
-	if err != nil {
-		return fmt.Errorf("failed to json encode response body: %w", err)
-	}
-
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write(data); err != nil {
-		return fmt.Errorf("failed to write response body: %w", err)
-	}
-
-	return nil
+	return writeJSON(w, http.StatusOK, APIResponse[GetUser]{Data: convertToGetUser(u)})
 }
 
 func (h UserHandler) HandleGetAuthUser(w http.ResponseWriter, r *http.Request) error {
@@ -87,18 +76,7 @@ func (h UserHandler) HandleGetAuthUser(w http.ResponseWriter, r *http.Request) e
 		return fmt.Errorf("auth user is missing for handler requiring auth: %w", err)
 	}
 
-	data, err := json.Marshal(convertToGetUser(&authUser.User))
-	if err != nil {
-		return fmt.Errorf("failed to json encode response body: %w", err)
-	}
-
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write(data); err != nil {
-		return fmt.Errorf("failed to write response body: %w", err)
-	}
-
-	return nil
+	return writeJSON(w, http.StatusOK, APIResponse[GetUser]{Data: convertToGetUser(&authUser.User)})
 }
 
 func (h UserHandler) HandleCreateUser(w http.ResponseWriter, r *http.Request) error {
@@ -118,18 +96,7 @@ func (h UserHandler) HandleCreateUser(w http.ResponseWriter, r *http.Request) er
 		return fmt.Errorf("failed to create auth user: %w", err)
 	}
 
-	data, err := json.Marshal(convertToGetUser(&a.User))
-	if err != nil {
-		return fmt.Errorf("failed to json encode response body: %w", err)
-	}
-
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusCreated)
-	if _, err := w.Write(data); err != nil {
-		return fmt.Errorf("failed to write response body: %w", err)
-	}
-
-	return nil
+	return writeJSON(w, http.StatusCreated, APIResponse[GetUser]{Data: convertToGetUser(&a.User)})
 }
 
 func (h UserHandler) HandleGetToken(w http.ResponseWriter, r *http.Request) error {
@@ -143,16 +110,5 @@ func (h UserHandler) HandleGetToken(w http.ResponseWriter, r *http.Request) erro
 		return fmt.Errorf("failed to generate jwt: %w", err)
 	}
 
-	data, err := json.Marshal(GetToken{Token: token.Token})
-	if err != nil {
-		return fmt.Errorf("failed to json encode response body: %w", err)
-	}
-
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write(data); err != nil {
-		return fmt.Errorf("failed to write response body: %w", err)
-	}
-
-	return nil
+	return writeJSON(w, http.StatusOK, APIResponse[GetToken]{Data: GetToken{Token: token.Token}})
 }

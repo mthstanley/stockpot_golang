@@ -156,7 +156,7 @@ func TestCreateUser(t *testing.T) {
 	defer res.Body.Close()
 
 	actual, _ := io.ReadAll(res.Body)
-	expected := `{"id":1,"name":"joe"}`
+	expected := `{"data":{"id":1,"name":"joe"}}`
 	if string(actual) != expected {
 		t.Errorf("expected %s, got %s", expected, actual)
 	}
@@ -178,7 +178,7 @@ func TestGetNonExistantUser(t *testing.T) {
 	defer res.Body.Close()
 
 	actual, _ := io.ReadAll(res.Body)
-	expected := `{"Error":"Entity not found","Details":"user entity with identifier 1 not found"}`
+	expected := `{"data":null,"errors":[{"error":"Entity not found","details":"user entity with identifier 1 not found"}]}`
 	if string(actual) != expected {
 		t.Errorf("expected %s, got %s", expected, actual)
 	}
@@ -205,7 +205,7 @@ func TestGetExistingUser(t *testing.T) {
 	defer res.Body.Close()
 
 	actual, _ := io.ReadAll(res.Body)
-	expected := `{"id":1,"name":"joe"}`
+	expected := `{"data":{"id":1,"name":"joe"}}`
 	if string(actual) != expected {
 		t.Errorf("expected %s, got %s", expected, actual)
 	}
@@ -227,7 +227,7 @@ func TestGetInvalidUserID(t *testing.T) {
 	defer res.Body.Close()
 
 	actual, _ := io.ReadAll(res.Body)
-	expected := `{"Error":"Invalid path parameter","Details":"failed to parse path value for path /user/{id}: strconv.ParseInt: parsing \"foo\": invalid syntax"}`
+	expected := `{"data":null,"errors":[{"error":"Invalid path parameter","details":"failed to parse path value for path /user/{id}: strconv.ParseInt: parsing \"foo\": invalid syntax"}]}`
 	if string(actual) != expected {
 		t.Errorf("expected %s, got %s", expected, actual)
 	}
@@ -249,7 +249,7 @@ func TestErrorMissingCredentials(t *testing.T) {
 	defer res.Body.Close()
 
 	actual, _ := io.ReadAll(res.Body)
-	expected := `{"Error":"Unauthorized","Details":"Request is missing auth headers"}`
+	expected := `{"data":null,"errors":[{"error":"Unauthorized","details":"Request is missing auth headers"}]}`
 	if string(actual) != expected {
 		t.Errorf("expected %s, got %s", expected, actual)
 	}
@@ -281,7 +281,7 @@ func TestSuccessfulAuthentication(t *testing.T) {
 	defer res.Body.Close()
 
 	actual, _ := io.ReadAll(res.Body)
-	expected := `{"id":1,"name":"joe"}`
+	expected := `{"data":{"id":1,"name":"joe"}}`
 	if string(actual) != expected {
 		t.Errorf("expected %s, got %s", expected, actual)
 	}
@@ -312,13 +312,13 @@ func TestTokenAuthenticationFlow(t *testing.T) {
 	}
 	defer res.Body.Close()
 
-	data := map[string]string{}
+	data := map[string]map[string]string{}
 	err = json.NewDecoder(res.Body).Decode(&data)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	token := data["token"]
+	token := data["data"]["token"]
 	req, err = http.NewRequest("GET", server.URL+"/user/auth", nil)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
@@ -330,7 +330,7 @@ func TestTokenAuthenticationFlow(t *testing.T) {
 	}
 
 	actual, _ := io.ReadAll(res.Body)
-	expected := `{"id":1,"name":"joe"}`
+	expected := `{"data":{"id":1,"name":"joe"}}`
 	if string(actual) != expected {
 		t.Errorf("expected %s, got %s", expected, actual)
 	}
@@ -395,7 +395,7 @@ func TestCreateRecipe(t *testing.T) {
 	}
 	defer res.Body.Close()
 	actual, _ := io.ReadAll(res.Body)
-	expected := `{
+	expected := `{"data": {
 		"id": 1,
         "author": {
             "id": 1,
@@ -433,7 +433,7 @@ func TestCreateRecipe(t *testing.T) {
                 "instruction": "Saute the carrots in the butter"
             }
         ]
-	}`
+	}}`
 
 	diff, err := jsonEq(expected, string(actual))
 	if err != nil {
@@ -568,7 +568,7 @@ func TestUpdateRecipeAddNewIngredient(t *testing.T) {
 	}
 	defer res.Body.Close()
 	actual, _ := io.ReadAll(res.Body)
-	expected := `{
+	expected := `{"data": {
 		"id": 1,
         "author": {
             "id": 1,
@@ -606,7 +606,7 @@ func TestUpdateRecipeAddNewIngredient(t *testing.T) {
                 "instruction": "Saute the carrots in the butter"
             }
         ]
-	}`
+	}}`
 
 	diff, err := jsonEq(expected, string(actual))
 	if err != nil {
@@ -739,7 +739,7 @@ func TestUpdateRecipeAddNewStep(t *testing.T) {
 	}
 	defer res.Body.Close()
 	actual, _ := io.ReadAll(res.Body)
-	expected := `{
+	expected := `{"data": {
 		"id": 1,
         "author": {
             "id": 1,
@@ -775,7 +775,7 @@ func TestUpdateRecipeAddNewStep(t *testing.T) {
 				"instruction": "Eat the carrots"
 			}
         ]
-	}`
+	}}`
 
 	diff, err := jsonEq(expected, string(actual))
 	if err != nil {
@@ -905,7 +905,7 @@ func TestUpdateRecipeChangeExistingFields(t *testing.T) {
 	}
 	defer res.Body.Close()
 	actual, _ := io.ReadAll(res.Body)
-	expected := `{
+	expected := `{"data": {
 		"id": 1,
         "author": {
             "id": 1,
@@ -936,7 +936,7 @@ func TestUpdateRecipeChangeExistingFields(t *testing.T) {
                 "instruction": "Boil the potatoes"
             }
         ]
-	}`
+	}}`
 
 	diff, err := jsonEq(expected, string(actual))
 	if err != nil {
@@ -1076,7 +1076,7 @@ func TestUpdateRecipeRemoveIngredientStep(t *testing.T) {
 	}
 	defer res.Body.Close()
 	actual, _ := io.ReadAll(res.Body)
-	expected := `{
+	expected := `{"data": {
 		"id": 1,
         "author": {
             "id": 1,
@@ -1107,7 +1107,7 @@ func TestUpdateRecipeRemoveIngredientStep(t *testing.T) {
                 "instruction": "Saute the carrots in the butter"
             }
         ]
-	}`
+	}}`
 
 	diff, err := jsonEq(expected, string(actual))
 	if err != nil {
@@ -1202,7 +1202,7 @@ func TestDeleteRecipe(t *testing.T) {
 	}
 	defer res.Body.Close()
 	actual, _ := io.ReadAll(res.Body)
-	expected := `{
+	expected := `{"data": {
 		"id": 1,
         "author": {
             "id": 1,
@@ -1240,7 +1240,7 @@ func TestDeleteRecipe(t *testing.T) {
                 "instruction": "Saute the carrots in the butter"
             }
         ]
-	}`
+	}}`
 
 	diff, err := jsonEq(expected, string(actual))
 	if err != nil {
@@ -1317,7 +1317,7 @@ func TestDeleteRecipe(t *testing.T) {
 	defer res.Body.Close()
 
 	actual, _ = io.ReadAll(res.Body)
-	expected = `{"Error":"Entity not found","Details":"recipe entity with identifier 1 not found"}`
+	expected = `{"data":null,"errors":[{"error":"Entity not found","details":"recipe entity with identifier 1 not found"}]}`
 	if string(actual) != expected {
 		t.Errorf("expected %s, got %s", expected, actual)
 	}
@@ -1420,7 +1420,7 @@ func TestCreateRecipePreservesIngredientOrder(t *testing.T) {
 	}
 	defer res.Body.Close()
 	actual, _ := io.ReadAll(res.Body)
-	expected := `{
+	expected := `{"data": {
 		"id": 2,
         "author": {
             "id": 1,
@@ -1458,7 +1458,7 @@ func TestCreateRecipePreservesIngredientOrder(t *testing.T) {
                 "instruction": "Mix it all together"
             }
         ]
-	}`
+	}}`
 
 	diff, err := jsonEq(expected, string(actual))
 	if err != nil {
@@ -1564,7 +1564,7 @@ func TestUpdateRecipePreservesIngredientOrder(t *testing.T) {
 	}
 	defer res.Body.Close()
 	actual, _ := io.ReadAll(res.Body)
-	expected := `{
+	expected := `{"data": {
 		"id": 1,
         "author": {
             "id": 1,
@@ -1602,7 +1602,7 @@ func TestUpdateRecipePreservesIngredientOrder(t *testing.T) {
                 "instruction": "Mix it all together"
             }
         ]
-	}`
+	}}`
 
 	diff, err := jsonEq(expected, string(actual))
 	if err != nil {
@@ -1700,7 +1700,7 @@ func TestGetRecipes(t *testing.T) {
 	defer res.Body.Close()
 
 	actual, _ := io.ReadAll(res.Body)
-	expected := `[
+	expected := `{"data": [
 		{
 			"id": 1,
 			"author": {
@@ -1777,7 +1777,7 @@ func TestGetRecipes(t *testing.T) {
 				}
 			]
 		}
-	]`
+	]}`
 
 	diff, err := jsonEq(expected, string(actual))
 	if err != nil {
