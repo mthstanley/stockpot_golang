@@ -24,11 +24,25 @@ func (e *PathValueParseError) Unwrap() error {
 	return e.Err
 }
 
+type QueryValueParseError struct {
+	Key   string
+	Value string
+	Err   error
+}
+
+func (e *QueryValueParseError) Error() string {
+	return fmt.Sprintf("failed to parse query value %s for key %s: %v", e.Value, e.Key, e.Err)
+}
+
+func (e *QueryValueParseError) Unwrap() error {
+	return e.Err
+}
+
 var RequestBodyDecodeError = errors.New("invalid request body")
 
 type ErrorResponse struct {
-	Error   string
-	Details string
+	Error   string `json:"error"`
+	Details string `json:"details,omitempty"`
 }
 
 func handleRequestBodyDecodeError(err error) (int, ErrorResponse) {
@@ -75,6 +89,12 @@ func HandleErrors(next HandlerFuncWithError) http.Handler {
 				Error:   "Invalid path parameter",
 				Details: perr.Error(),
 			}
+		} else if perr, ok := errors.AsType[*QueryValueParseError](err); ok {
+			status = http.StatusBadRequest
+			errResponse = ErrorResponse{
+				Error:   "Invalid query parameter",
+				Details: perr.Error(),
+			}
 		} else if errors.Is(err, RequestBodyDecodeError) {
 			status, errResponse = handleRequestBodyDecodeError(err)
 		} else if enterr, ok := errors.AsType[*core.EntityNotFound](err); ok {
@@ -91,7 +111,7 @@ func HandleErrors(next HandlerFuncWithError) http.Handler {
 			log.Printf("error handling request: %v", err)
 		}
 
-		data, err := json.Marshal(&errResponse)
+		data, err := json.Marshal(&APIResponse[any]{Errors: []ErrorResponse{errResponse}})
 		if err != nil {
 			log.Println("error json encoding response:", err)
 			w.WriteHeader(http.StatusInternalServerError)

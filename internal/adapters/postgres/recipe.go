@@ -24,11 +24,16 @@ func NewRecipeRepository(db *pgxpool.Pool) *RecipeRepository {
 	return &RecipeRepository{db}
 }
 
-func (r RecipeRepository) Get(ctx context.Context) ([]recipe.Recipe, error) {
+func (r RecipeRepository) Count(ctx context.Context) (int64, error) {
+	queries := db.New(r.db)
+	return queries.CountRecipes(ctx)
+}
+
+func (r RecipeRepository) Get(ctx context.Context, page int32, size int32) ([]recipe.Recipe, error) {
 	queries := db.New(r.db)
 	recipes := make(map[int64]recipe.Recipe)
 
-	dbRecipes, err := queries.GetRecipes(ctx)
+	dbRecipes, err := queries.GetRecipes(ctx, db.GetRecipesParams{Limit: int64(size), Offset: int64(page-1) * int64(size)})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return []recipe.Recipe{}, nil
@@ -54,7 +59,8 @@ func (r RecipeRepository) Get(ctx context.Context) ([]recipe.Recipe, error) {
 		}
 	}
 
-	dbRecipeSteps, err := queries.GetAllRecipeSteps(ctx)
+	recipeIds := slices.Collect(maps.Keys(recipes))
+	dbRecipeSteps, err := queries.GetAllRecipeSteps(ctx, recipeIds)
 	if err != nil {
 		if !errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("failed to retrieve recipe steps: %w", err)
@@ -75,7 +81,7 @@ func (r RecipeRepository) Get(ctx context.Context) ([]recipe.Recipe, error) {
 		}
 	}
 
-	dbRecipeIngredients, err := queries.GetAllRecipeIngredients(ctx)
+	dbRecipeIngredients, err := queries.GetAllRecipeIngredients(ctx, recipeIds)
 	if err != nil {
 		if !errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("failed to retrieve recipe ingredients: %w", err)

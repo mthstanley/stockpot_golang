@@ -99,6 +99,24 @@ export interface BearerAuth {
 
 export type Credentials = BasicAuth | BearerAuth;
 
+export interface ErrorResponse {
+  error: string;
+  details?: string;
+}
+
+export interface ResponseMeta {
+  page: number;
+  size: number;
+  pages: number;
+  items: number;
+}
+
+export interface ApiResponse<T> {
+  data: T;
+  errors?: Array<ErrorResponse>;
+  meta?: ResponseMeta;
+}
+
 class ApiClient {
   client: AxiosInstance;
   tokenExpirationCallback: VoidFunction;
@@ -110,10 +128,10 @@ class ApiClient {
     this.client.interceptors.response.use(
       (response: AxiosResponse): AxiosResponse => {
         if (
-          response.data &&
+          response.data.data &&
           response.headers["content-type"].startsWith("application/json")
         ) {
-          response.data = camelKeys(response.data);
+          response.data.data = camelKeys(response.data.data);
         }
 
         return response;
@@ -150,8 +168,8 @@ class ApiClient {
 
   async createUser(request: CreateUserRequest): Promise<GetUserResponse> {
     return this.client
-      .post<GetUserResponse>("/user", request)
-      .then((response) => response.data);
+      .post<ApiResponse<GetUserResponse>>("/user", request)
+      .then((response) => response.data.data);
   }
 
   async login(
@@ -161,7 +179,7 @@ class ApiClient {
     switch (credentials.kind) {
       case "basic":
         return this.client
-          .post<GetTokenResponse>(
+          .post<ApiResponse<GetTokenResponse>>(
             "/user/token",
             {},
             {
@@ -173,9 +191,9 @@ class ApiClient {
           )
           .then((response) => {
             this.client.defaults.headers.common["Authorization"] =
-              `Bearer ${response.data.token}`;
+              `Bearer ${response.data.data.token}`;
             this.tokenExpirationCallback = tokenExpirationCallback;
-            return response.data;
+            return response.data.data;
           });
       case "bearer":
         this.client.defaults.headers.common["Authorization"] =
@@ -189,38 +207,44 @@ class ApiClient {
     this.client.defaults.headers.common["Authorization"] = "";
   }
 
-  async getRecipes(): Promise<Set<GetRecipeResponse>> {
+  async getRecipes({ page = 1, size = 10 } = {}): Promise<
+    ApiResponse<GetRecipeResponse[]>
+  > {
     return this.client
-      .get<Set<GetRecipeResponse>>("/recipe")
+      .get<
+        ApiResponse<GetRecipeResponse[]>
+      >(`/recipe?page=${page}&size=${size}`)
       .then((response) => response.data);
   }
 
   async getRecipe(id: number): Promise<GetRecipeResponse> {
     return this.client
-      .get<GetRecipeResponse>(`/recipe/${id}`)
-      .then((response) => response.data);
+      .get<ApiResponse<GetRecipeResponse>>(`/recipe/${id}`)
+      .then((response) => response.data.data);
   }
 
   async createRecipe(
     createRecipeRequest: MutateRecipeRequest,
   ): Promise<GetRecipeResponse> {
     return this.client
-      .post<GetRecipeResponse>("/recipe", createRecipeRequest)
-      .then((response) => response.data);
+      .post<ApiResponse<GetRecipeResponse>>("/recipe", createRecipeRequest)
+      .then((response) => response.data.data);
   }
 
   async updateRecipe(
     updateRecipeRequest: MutateRecipeRequest,
   ): Promise<GetRecipeResponse> {
     return this.client
-      .post(`/recipe/${updateRecipeRequest.id!}`, updateRecipeRequest)
-      .then((response) => response.data);
+      .post<
+        ApiResponse<GetRecipeResponse>
+      >(`/recipe/${updateRecipeRequest.id!}`, updateRecipeRequest)
+      .then((response) => response.data.data);
   }
 
   async getUnits(): Promise<Set<GetUnitResponse>> {
     return this.client
-      .get<Set<GetUnitResponse>>("/recipe/unit")
-      .then((response) => new Set(response.data));
+      .get<ApiResponse<Set<GetUnitResponse>>>("/recipe/unit")
+      .then((response) => new Set(response.data.data));
   }
 }
 

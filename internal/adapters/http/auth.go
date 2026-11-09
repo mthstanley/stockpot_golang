@@ -41,7 +41,7 @@ func ValidateAuth(authService auth.Service) func(http.Handler) http.Handler {
 					Error:   "Unauthorized",
 					Details: "Request is missing auth headers",
 				}
-				data, err := json.Marshal(&errResponse)
+				data, err := json.Marshal(&APIResponse[any]{Errors: []ErrorResponse{errResponse}})
 				if err != nil {
 					log.Println("error json encoding response:", err)
 					w.WriteHeader(http.StatusInternalServerError)
@@ -70,7 +70,7 @@ func ValidateAuth(authService auth.Service) func(http.Handler) http.Handler {
 					Error:   "Unauthorized",
 					Details: "Request with invalid credentials",
 				}
-				data, err := json.Marshal(&errResponse)
+				data, err := json.Marshal(&APIResponse[any]{Errors: []ErrorResponse{errResponse}})
 				if err != nil {
 					log.Println("error json encoding response:", err)
 					w.WriteHeader(http.StatusInternalServerError)

@@ -52,7 +52,8 @@ type Recipe struct {
 }
 
 type Repository interface {
-	Get(ctx context.Context) ([]Recipe, error)
+	Get(ctx context.Context, page int32, size int32) ([]Recipe, error)
+	Count(ctx context.Context) (int64, error)
 	GetByID(ctx context.Context, id int64) (*Recipe, error)
 	Create(ctx context.Context, rec Recipe) (*Recipe, error)
 	Update(ctx context.Context, rec Recipe) (*Recipe, error)
@@ -61,7 +62,8 @@ type Repository interface {
 }
 
 type Service interface {
-	Get(ctx context.Context) ([]Recipe, error)
+	Get(ctx context.Context, page int32, size int32) ([]Recipe, error)
+	Count(ctx context.Context) (int64, error)
 	GetByID(ctx context.Context, id int64) (*Recipe, error)
 	Create(ctx context.Context, rec Recipe) (*Recipe, error)
 	Update(ctx context.Context, rec Recipe) (*Recipe, error)
@@ -77,8 +79,12 @@ func NewDefaultService(repo Repository) *DefaultService {
 	return &DefaultService{repo}
 }
 
-func (s DefaultService) Get(ctx context.Context) ([]Recipe, error) {
-	return s.repo.Get(ctx)
+func (s DefaultService) Get(ctx context.Context, page int32, size int32) ([]Recipe, error) {
+	return s.repo.Get(ctx, page, size)
+}
+
+func (s DefaultService) Count(ctx context.Context) (int64, error) {
+	return s.repo.Count(ctx)
 }
 
 func (s DefaultService) GetByID(ctx context.Context, id int64) (*Recipe, error) {
