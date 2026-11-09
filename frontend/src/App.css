@@ -95,7 +95,7 @@ textarea:not([rows]) {
   width: 100%;
 }
 
-nav {
+nav.navbar {
   position: fixed;
   top: 0;
   background-color: #333;
@@ -390,5 +390,53 @@ form.recipe {
     input {
       width: 100%;
     }
+  }
+}
+
+div.pagination {
+  border-top: 1px solid #eeeeee;
+  padding-top: 0.5em;
+  text-align: center;
+
+  nav {
+    padding-top: 0.5em;
+    font: 1.2em sans-serif;
+
+    display: flex;
+    justify-content: center;
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+  }
+
+  li {
+    margin: 0 1px;
+  }
+
+  li.ellipsis {
+    display: block;
+    padding: 0.5em 1em;
+  }
+
+  a {
+    display: block;
+    border: 1px solid #999999;
+    border-radius: 0.2em;
+    text-decoration: none;
+    color: inherit;
+    padding: 0.5em 1em;
+  }
+
+  a.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  a.current-page {
+    background-color: #333;
   }
 }

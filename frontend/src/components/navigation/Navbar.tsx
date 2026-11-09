@@ -6,7 +6,7 @@ const Navbar = () => {
   const auth = useAuth();
 
   return (
-    <nav>
+    <nav className="navbar">
       <div className="content">
         <div className="brand">
           <h2>Stockpot</h2>

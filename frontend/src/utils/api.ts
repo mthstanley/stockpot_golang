@@ -207,10 +207,14 @@ class ApiClient {
     this.client.defaults.headers.common["Authorization"] = "";
   }
 
-  async getRecipes(): Promise<Set<GetRecipeResponse>> {
+  async getRecipes({ page = 1, size = 10 } = {}): Promise<
+    ApiResponse<GetRecipeResponse[]>
+  > {
     return this.client
-      .get<ApiResponse<Set<GetRecipeResponse>>>("/recipe")
-      .then((response) => response.data.data);
+      .get<
+        ApiResponse<GetRecipeResponse[]>
+      >(`/recipe?page=${page}&size=${size}`)
+      .then((response) => response.data);
   }
 
   async getRecipe(id: number): Promise<GetRecipeResponse> {
