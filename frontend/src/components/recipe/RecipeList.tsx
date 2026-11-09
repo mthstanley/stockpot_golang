@@ -79,7 +79,7 @@ const RecipeList = () => {
                   to={{
                     search: getUpdatedSearchString(
                       "page",
-                      `${(data?.meta?.page ?? 0) - 1}`,
+                      `${data.meta.page - 1}`,
                     ),
                   }}
                 >
