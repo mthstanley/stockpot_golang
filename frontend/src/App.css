@@ -164,11 +164,11 @@ main {
 }
 
 @media all and (max-width: 767px) {
-  nav {
+  nav.navbar {
     height: auto;
   }
 
-  nav .content {
+  nav.navbar .content {
     flex-direction: column;
     height: 140px;
 
