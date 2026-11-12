@@ -1,12 +1,9 @@
 package postgres
 
 import (
-	"cmp"
 	"context"
 	"errors"
 	"fmt"
-	"maps"
-	"slices"
 	"strconv"
 
 	"github.com/jackc/pgx/v5"
@@ -24,16 +21,22 @@ func NewRecipeRepository(db *pgxpool.Pool) *RecipeRepository {
 	return &RecipeRepository{db}
 }
 
-func (r RecipeRepository) Count(ctx context.Context) (int64, error) {
+func (r RecipeRepository) Count(ctx context.Context, search string) (int64, error) {
 	queries := db.New(r.db)
-	return queries.CountRecipes(ctx)
+	return queries.CountRecipes(ctx, search)
 }
 
-func (r RecipeRepository) Get(ctx context.Context, page int32, size int32) ([]recipe.Recipe, error) {
+func (r RecipeRepository) Get(ctx context.Context, page int32, size int32, search string) ([]recipe.Recipe, error) {
 	queries := db.New(r.db)
 	recipes := make(map[int64]recipe.Recipe)
 
-	dbRecipes, err := queries.GetRecipes(ctx, db.GetRecipesParams{Limit: int64(size), Offset: int64(page-1) * int64(size)})
+	dbRecipes, err := queries.GetRecipes(
+		ctx,
+		db.GetRecipesParams{
+			Limit:       int64(size),
+			Offset:      int64(page-1) * int64(size),
+			SearchQuery: search,
+		})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return []recipe.Recipe{}, nil
@@ -41,7 +44,10 @@ func (r RecipeRepository) Get(ctx context.Context, page int32, size int32) ([]re
 		return nil, fmt.Errorf("failed to retrieve recipe: %w", err)
 	}
 
+	// preserve the query's ordering (relevance when searching), since map iteration is unordered
+	recipeIds := make([]int64, 0, len(dbRecipes))
 	for _, r := range dbRecipes {
+		recipeIds = append(recipeIds, r.ID)
 		recipes[r.ID] = recipe.Recipe{
 			ID:            &r.ID,
 			Title:         r.Title,
@@ -59,7 +65,6 @@ func (r RecipeRepository) Get(ctx context.Context, page int32, size int32) ([]re
 		}
 	}
 
-	recipeIds := slices.Collect(maps.Keys(recipes))
 	dbRecipeSteps, err := queries.GetAllRecipeSteps(ctx, recipeIds)
 	if err != nil {
 		if !errors.Is(err, pgx.ErrNoRows) {
@@ -104,9 +109,11 @@ func (r RecipeRepository) Get(ctx context.Context, page int32, size int32) ([]re
 		}
 	}
 
-	return slices.SortedFunc(maps.Values(recipes), func(a, b recipe.Recipe) int {
-		return cmp.Compare(*a.ID, *b.ID)
-	}), nil
+	result := make([]recipe.Recipe, 0, len(recipeIds))
+	for _, id := range recipeIds {
+		result = append(result, recipes[id])
+	}
+	return result, nil
 }
 
 func (r RecipeRepository) GetByID(ctx context.Context, id int64) (*recipe.Recipe, error) {
@@ -231,6 +238,12 @@ func (r RecipeRepository) Create(ctx context.Context, rec recipe.Recipe) (*recip
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert recipe ingredients: %w", err)
 	}
+
+	err = qtx.UpdateRecipeSearchVector(ctx, recipeResult.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update recipe search vector: %w", err)
+	}
+
 	err = tx.Commit(ctx)
 	if err != nil {
 		return nil, err
@@ -297,7 +310,8 @@ func (r RecipeRepository) Update(ctx context.Context, rec recipe.Recipe) (*recip
 	}
 
 	deleteSteps := db.DeleteStepsParams{
-		Recipe: recipeResult.ID,
+		Recipe:  recipeResult.ID,
+		StepIds: []int64{},
 	}
 	for _, s := range upsertedSteps {
 		deleteSteps.StepIds = append(deleteSteps.StepIds, s.ID)
@@ -338,7 +352,8 @@ func (r RecipeRepository) Update(ctx context.Context, rec recipe.Recipe) (*recip
 	}
 
 	deleteIngredients := db.DeleteRecipeIngredientsParams{
-		Recipe: recipeResult.ID,
+		Recipe:        recipeResult.ID,
+		IngredientIds: []int64{},
 	}
 	for _, i := range upsertedIngredients {
 		deleteIngredients.IngredientIds = append(deleteIngredients.IngredientIds, i.ID)
@@ -349,6 +364,11 @@ func (r RecipeRepository) Update(ctx context.Context, rec recipe.Recipe) (*recip
 	err = qtx.DeleteRecipeIngredients(ctx, deleteIngredients)
 	if err != nil {
 		return nil, fmt.Errorf("failed to delete removed ingredients: %w", err)
+	}
+
+	err = qtx.UpdateRecipeSearchVector(ctx, recipeResult.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update recipe search vector: %w", err)
 	}
 
 	err = tx.Commit(ctx)

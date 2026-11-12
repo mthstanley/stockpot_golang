@@ -430,11 +430,12 @@ func (h RecipeHandler) HandleGetRecipes(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		return err
 	}
-	recipeCount, err := h.recipeService.Count(r.Context())
+	search := r.URL.Query().Get("search")
+	recipeCount, err := h.recipeService.Count(r.Context(), search)
 	if err != nil {
 		return fmt.Errorf("failed to get recipe count: %w", err)
 	}
-	recipes, err := h.recipeService.Get(r.Context(), page, size)
+	recipes, err := h.recipeService.Get(r.Context(), page, size, search)
 	if err != nil {
 		return fmt.Errorf("failed to get recipe: %w", err)
 	}

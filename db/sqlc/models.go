@@ -37,6 +37,7 @@ type Recipe struct {
 	YieldUnits    int64
 	MinServings   pgtype.Int4
 	MaxServings   pgtype.Int4
+	SearchVector  interface{}
 }
 
 type RecipeIngredient struct {
