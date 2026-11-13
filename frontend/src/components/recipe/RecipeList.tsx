@@ -13,6 +13,7 @@ const RecipeList = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const page = getQueryInt("page", 1);
   const size = getQueryInt("size", 10);
+  const search = searchParams.get("search");
   const [data, setData] = useState<ApiResponse<GetRecipeResponse[]> | null>(
     null,
   );
@@ -25,7 +26,7 @@ const RecipeList = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const response = await apiClient.getRecipes({ page, size });
+      const response = await apiClient.getRecipes({ page, size, search });
       // redirect to the last page if the requested page is past the end
       if (
         response.meta &&
@@ -44,7 +45,7 @@ const RecipeList = () => {
       setData(response);
     };
     fetchData();
-  }, [page, size, setSearchParams]);
+  }, [page, size, search, setSearchParams]);
 
   return (
     <>

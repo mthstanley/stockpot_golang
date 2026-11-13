@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -1954,6 +1955,93 @@ func TestGetRecipesInvalidPagination(t *testing.T) {
 
 			if res.StatusCode != 400 {
 				t.Errorf("expected status code 400, got %d", res.StatusCode)
+			}
+		})
+	}
+}
+
+func TestGetRecipesSearch(t *testing.T) {
+	ctx := context.Background()
+	server := setupHTTPServer(ctx, t, serverConfig{disableUserSignup: false})
+
+	_, err := server.Client().Post(server.URL+"/user", "application/json", strings.NewReader(`{"username": "test", "password": "secret", "name": "joe"}`))
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	idToChange := 4
+	recipes := []struct {
+		id          *int
+		title       string
+		description string
+		ingredients string
+	}{
+		{nil, "carrot", "foo", `[{"quantity": 1, "units":"grams", "ingredient":"potato"}]`},
+		{nil, "potato", "bar", `[{"quantity": 1, "units":"grams", "ingredient":"potato"}]`},
+		{nil, "butter", "bat", `[]`},
+		{nil, "test", "baz", `[{"quantity": 1, "units":"grams", "ingredient":"potato"}]`},
+		{&idToChange, "test", "baz", `[]`}, // remove ingredients from recipe to test that search vector is properly updated
+	}
+	for _, item := range recipes {
+		body := fmt.Sprintf(`{
+			"title": "%s",
+			"description": "%s",
+			"yield_quantity": 1,
+			"yield_units": "grams",
+			"ingredients": %s,
+			"steps": []
+		}`, item.title, item.description, item.ingredients)
+		targetURL := server.URL + "/recipe"
+		targetStatusCode := 201
+		if item.id != nil {
+			targetURL = targetURL + "/" + strconv.Itoa(*item.id)
+			targetStatusCode = 200
+		}
+		req, err := http.NewRequest("POST", targetURL, strings.NewReader(body))
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		req.SetBasicAuth("test", "secret")
+		res, err := server.Client().Do(req)
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		res.Body.Close()
+		if res.StatusCode != targetStatusCode {
+			t.Fatalf("expected status code %d creating recipe, got %d", targetStatusCode, res.StatusCode)
+		}
+	}
+
+	tests := []struct {
+		name        string
+		query       string
+		expectedIDs []int64
+		expected    stockpothttp.ResponseMeta
+	}{
+		{"defaults", "", []int64{1, 2, 3, 4}, stockpothttp.ResponseMeta{Page: 1, Size: 10, Pages: 1, Items: 4}},
+		{"single result", "?search=carrot", []int64{1}, stockpothttp.ResponseMeta{Page: 1, Size: 10, Pages: 1, Items: 1}},
+		{"multiple ranked results", "?search=potato", []int64{2, 1}, stockpothttp.ResponseMeta{Page: 1, Size: 10, Pages: 1, Items: 2}},
+		{"originally no ingredients", "?search=butter", []int64{3}, stockpothttp.ResponseMeta{Page: 1, Size: 10, Pages: 1, Items: 1}},
+		{"updated to no ingredients", "?search=test", []int64{4}, stockpothttp.ResponseMeta{Page: 1, Size: 10, Pages: 1, Items: 1}},
+		{"no matches", "?search=hello", []int64{}, stockpothttp.ResponseMeta{Page: 1, Size: 10, Pages: 1, Items: 0}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			status, body := getRecipesPage(t, server, tt.query)
+			if status != 200 {
+				t.Errorf("expected status code 200, got %d", status)
+			}
+
+			ids := []int64{}
+			for _, r := range body.Data {
+				ids = append(ids, r.ID)
+			}
+			if diff := cmp.Diff(tt.expectedIDs, ids); diff != "" {
+				t.Errorf("recipe ids don't match expected (- wanted, + got): %s", diff)
+			}
+			if diff := cmp.Diff(tt.expected, body.Meta); diff != "" {
+				t.Errorf("meta doesn't match expected (- wanted, + got): %s", diff)
 			}
 		})
 	}

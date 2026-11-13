@@ -95,6 +95,22 @@ textarea:not([rows]) {
   width: 100%;
 }
 
+form.search {
+  width: 100%;
+}
+
+input.search {
+  height: 100%;
+  background-image: url("./assets/search.svg");
+  background-repeat: no-repeat;
+  background-position: 12px center;
+  background-size: 16px 16px;
+  padding-left: 38px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
 nav.navbar {
   position: fixed;
   top: 0;
@@ -105,7 +121,6 @@ nav.navbar {
   .content {
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-between;
     align-items: center;
     height: 100%;
 
@@ -120,7 +135,14 @@ nav.navbar {
       }
     }
 
+    .searchbar {
+      height: 100%;
+      display: flex;
+      padding: 14px 16px;
+    }
+
     .links {
+      margin-left: auto;
       height: 100%;
 
       ul {
@@ -170,20 +192,29 @@ main {
 
   nav.navbar .content {
     flex-direction: column;
-    height: 140px;
+    height: 210px;
 
     .brand {
-      height: 50%;
+      height: 33%;
+    }
+
+    .searchbar {
+      height: 33%;
+      width: 100%;
+
+      input {
+        width: 100%;
+      }
     }
 
     .links {
-      height: 50%;
+      height: 33%;
       width: 100%;
     }
   }
 
   main {
-    padding: 140px 0% 0% 0%;
+    padding: 210px 0% 0% 0%;
   }
 }
 

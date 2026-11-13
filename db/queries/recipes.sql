@@ -164,7 +164,12 @@ FROM
     recipe AS r
     JOIN app_user au ON r.author = au.id
     JOIN unit ru ON r.yield_units = ru.id
-ORDER BY r.id ASC
+WHERE @search_query::text = '' OR r.search_vector @@ websearch_to_tsquery('english', @search_query::text)
+ORDER BY
+    CASE WHEN @search_query::text = '' THEN 0
+    ELSE ts_rank(r.search_vector, websearch_to_tsquery('english', @search_query::text))
+    END DESC,
+    r.id ASC
 LIMIT sqlc.arg('limit')::bigint OFFSET sqlc.arg('offset')::bigint;
 
 -- name: GetAllRecipeSteps :many
@@ -202,4 +207,32 @@ WHERE name != 'unknown';
 
 -- name: CountRecipes :one
 SELECT COUNT(1)
-FROM recipe;
+FROM recipe AS r
+WHERE @search_query::text = '' OR r.search_vector @@ websearch_to_tsquery('english', @search_query::text);
+
+-- name: UpdateRecipeSearchVector :exec
+UPDATE recipe r
+SET
+  search_vector = setweight (to_tsvector ('english', coalesce(title, '')), 'A') || setweight (
+    to_tsvector ('english', coalesce(description, '')),
+    'B'
+  ) || setweight (
+    to_tsvector (
+      'english',
+      coalesce(
+        (
+          SELECT
+            string_agg (i.name, ' ')
+          FROM
+            recipe_ingredient AS ri
+            JOIN ingredient AS i on ri.ingredient = i.id
+          WHERE
+            ri.recipe = r.id
+        ),
+        ''
+      )
+    ),
+    'C'
+  )
+WHERE
+  r.id = $1;

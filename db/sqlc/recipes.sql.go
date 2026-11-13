@@ -13,11 +13,12 @@ import (
 
 const countRecipes = `-- name: CountRecipes :one
 SELECT COUNT(1)
-FROM recipe
+FROM recipe AS r
+WHERE $1::text = '' OR r.search_vector @@ websearch_to_tsquery('english', $1::text)
 `
 
-func (q *Queries) CountRecipes(ctx context.Context) (int64, error) {
-	row := q.db.QueryRow(ctx, countRecipes)
+func (q *Queries) CountRecipes(ctx context.Context, searchQuery string) (int64, error) {
+	row := q.db.QueryRow(ctx, countRecipes, searchQuery)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -313,13 +314,19 @@ FROM
     recipe AS r
     JOIN app_user au ON r.author = au.id
     JOIN unit ru ON r.yield_units = ru.id
-ORDER BY r.id ASC
-LIMIT $2::bigint OFFSET $1::bigint
+WHERE $1::text = '' OR r.search_vector @@ websearch_to_tsquery('english', $1::text)
+ORDER BY
+    CASE WHEN $1::text = '' THEN 0
+    ELSE ts_rank(r.search_vector, websearch_to_tsquery('english', $1::text))
+    END DESC,
+    r.id ASC
+LIMIT $3::bigint OFFSET $2::bigint
 `
 
 type GetRecipesParams struct {
-	Offset int64
-	Limit  int64
+	SearchQuery string
+	Offset      int64
+	Limit       int64
 }
 
 type GetRecipesRow struct {
@@ -337,7 +344,7 @@ type GetRecipesRow struct {
 }
 
 func (q *Queries) GetRecipes(ctx context.Context, arg GetRecipesParams) ([]GetRecipesRow, error) {
-	rows, err := q.db.Query(ctx, getRecipes, arg.Offset, arg.Limit)
+	rows, err := q.db.Query(ctx, getRecipes, arg.SearchQuery, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -438,7 +445,7 @@ INSERT INTO recipe (
     min_servings,
     max_servings
 ) VALUES ($1, $2, $3, $4, $5, $6, $7, (SELECT id FROM unit WHERE name = $10), $8, $9)
-RETURNING id, title, description, author, prep_time, cook_time, inactive_time, yield_quantity, yield_units, min_servings, max_servings
+RETURNING id, title, description, author, prep_time, cook_time, inactive_time, yield_quantity, yield_units, min_servings, max_servings, search_vector
 `
 
 type InsertRecipeParams struct {
@@ -480,6 +487,7 @@ func (q *Queries) InsertRecipe(ctx context.Context, arg InsertRecipeParams) (Rec
 		&i.YieldUnits,
 		&i.MinServings,
 		&i.MaxServings,
+		&i.SearchVector,
 	)
 	return i, err
 }
@@ -576,6 +584,39 @@ func (q *Queries) InsertSteps(ctx context.Context, arg InsertStepsParams) ([]Ste
 	return items, nil
 }
 
+const updateRecipeSearchVector = `-- name: UpdateRecipeSearchVector :exec
+UPDATE recipe r
+SET
+  search_vector = setweight (to_tsvector ('english', coalesce(title, '')), 'A') || setweight (
+    to_tsvector ('english', coalesce(description, '')),
+    'B'
+  ) || setweight (
+    to_tsvector (
+      'english',
+      coalesce(
+        (
+          SELECT
+            string_agg (i.name, ' ')
+          FROM
+            recipe_ingredient AS ri
+            JOIN ingredient AS i on ri.ingredient = i.id
+          WHERE
+            ri.recipe = r.id
+        ),
+        ''
+      )
+    ),
+    'C'
+  )
+WHERE
+  r.id = $1
+`
+
+func (q *Queries) UpdateRecipeSearchVector(ctx context.Context, id int64) error {
+	_, err := q.db.Exec(ctx, updateRecipeSearchVector, id)
+	return err
+}
+
 const upsertRecipe = `-- name: UpsertRecipe :one
 INSERT INTO recipe (
     id,
@@ -601,7 +642,7 @@ ON CONFLICT (id) DO UPDATE SET
     yield_units = EXCLUDED.yield_units,
     min_servings = EXCLUDED.min_servings,
     max_servings = EXCLUDED.max_servings
-RETURNING id, title, description, author, prep_time, cook_time, inactive_time, yield_quantity, yield_units, min_servings, max_servings
+RETURNING id, title, description, author, prep_time, cook_time, inactive_time, yield_quantity, yield_units, min_servings, max_servings, search_vector
 `
 
 type UpsertRecipeParams struct {
@@ -645,6 +686,7 @@ func (q *Queries) UpsertRecipe(ctx context.Context, arg UpsertRecipeParams) (Rec
 		&i.YieldUnits,
 		&i.MinServings,
 		&i.MaxServings,
+		&i.SearchVector,
 	)
 	return i, err
 }
